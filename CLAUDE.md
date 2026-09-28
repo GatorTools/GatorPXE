@@ -5,7 +5,7 @@ serveur Debian ou Ubuntu, il propose aux postes du réseau un menu construit
 tout seul — CloneGator, des images démarrables déposées dans un dossier, des
 renvois vers d'autres serveurs (WDS…).
 
-**État : phase 0 faite.** Analyse fonctionnelle (révision 0.2) et plan de
+**État : phase 0 faite.** Analyse fonctionnelle (révision 0.3) et plan de
 développement (révision 0.3) ; phase 0 faite, en attente de la revue de Kevin.
 
 ## Les documents font foi
@@ -35,7 +35,7 @@ laisser le code s'écarter d'une spec figée en silence.
 ## Les règles, héritées de CloneGator (§15 de l'analyse)
 
 - **Python 3, bibliothèque standard seule.** Aucune dépendance hors des dépôts
-  Debian et Ubuntu, sauf l'iPXE signé et wimboot, téléchargés depuis les
+  Debian et Ubuntu, sauf iPXE et wimboot, téléchargés depuis les
   releases d'iPXE. Si un besoin semble réclamer autre chose, le signaler.
 - **Python orchestre, il ne sert pas.** Les fichiers passent par dnsmasq et
   lighttpd, en instances propres à GatorPXE.

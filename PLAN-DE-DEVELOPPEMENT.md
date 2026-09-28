@@ -1,6 +1,6 @@
 # GatorPXE — Plan de développement
 
-Compagnon de [ANALYSE-FONCTIONNELLE.md](ANALYSE-FONCTIONNELLE.md), révision 0.2.
+Compagnon de [ANALYSE-FONCTIONNELLE.md](ANALYSE-FONCTIONNELLE.md), révision 0.3.
 Les renvois `§n` pointent vers l'analyse.
 
 | Rév. | Date | Auteur | Changement |
@@ -8,6 +8,7 @@ Les renvois `§n` pointent vers l'analyse.
 | 0.1 | 2026-09-28 | Kevin + Claude | Découpage initial en modules et en phases |
 | 0.2 | 2026-09-28 | Kevin + Claude | Le réseau de la station porte un WDS de production : tous les essais se font dans un réseau de VM isolé, sortie par NAT seulement ; recette sur un réseau physique séparé |
 | 0.3 | 2026-09-28 | Claude | Phase 0 faite, en attente de la revue de Kevin : réseau d'essai, socle, et la chaîne Secure Boot essayée à la main jusqu'au menu |
+| 0.4 | 2026-09-28 | Kevin + Claude | Analyse 0.3 : iPXE BIOS pris dans les releases d'iPXE ; wimboot passe en phase 3, où il sert. Phase 1 commencée |
 
 ---
 
@@ -75,7 +76,7 @@ gatorpxe/
   reseau.py        carte réseau principale, adresse, ports et pare-feu (§9)
   dnsmasq.py       réglages de l'instance dnsmasq : proxy DHCP, TFTP, BIOS/UEFI, iPXE
   lighttpd.py      réglages de l'instance lighttpd (port 8069)
-  telechargements.py  iPXE signé, wimboot, CloneGator : téléchargement, vérification,
+  telechargements.py  iPXE, wimboot, CloneGator : téléchargement, vérification,
                    dernière version gardée hors ligne
   images.py        inventaire du dossier : type, nom affiché, sous-dossiers, fichiers ignorés
   windows.py       extraction des ISO Windows par 7zip, une fois, dans /var/lib/gatorpxe
@@ -132,8 +133,8 @@ aussi.
 Enseignements :
 
 - Les releases d'iPXE publient `ipxeboot.tar.gz` : shim et iPXE signés (`x86_64-sb/`), mais aussi
-  les chargeurs BIOS (`undionly.kpxe`). Le paquet `ipxe` des dépôts deviendrait alors inutile ;
-  à trancher en phase 1.
+  les chargeurs BIOS (`undionly.kpxe`). Le paquet `ipxe` des dépôts est donc abandonné
+  (analyse 0.3).
 - L'iPXE signé cherche `autoexec.ipxe` sur le serveur TFTP avant tout : c'est sans doute la
   réponse à la boucle quand le DHCP est réglé à la main (§16).
 - En BIOS, la carte réseau de QEMU contient elle-même un iPXE : le poste saute l'étape TFTP.
@@ -143,8 +144,8 @@ Enseignements :
 
 ### Phase 1 — La chaîne de démarrage · taille L
 
-- `telechargements` : l'iPXE signé (shim et iPXE) et wimboot, depuis les releases d'iPXE ;
-  l'iPXE BIOS du paquet `ipxe`
+- `telechargements` : iPXE depuis ses releases — shim et iPXE signés pour l'UEFI, `undionly.kpxe`
+  pour le BIOS
 - `dnsmasq` : proxy DHCP et TFTP sur la carte choisie, bon chargeur pour BIOS et UEFI, iPXE
   reconnu et renvoyé vers le menu en HTTP
 - `lighttpd` : l'instance sur le port 8069
@@ -174,7 +175,7 @@ sauvegarde vers le partage d'essai, atteint par le NAT.
 
 - `images` : balayage du dossier toutes les quelques secondes, noms nettoyés, sous-menus,
   fichiers ignorés et pourquoi ; dossier introuvable sans arrêt du service (§12)
-- WIM par wimboot ; ISO Windows extraite par 7zip, une fois, puis wimboot ; ISO quelconque en
+- wimboot, téléchargé depuis ses releases ; WIM par wimboot ; ISO Windows extraite par 7zip, une fois, puis wimboot ; ISO quelconque en
   sanboot ; EFI chargé directement (§6)
 
 **Essais** : une ISO Windows 11 et un WIM en UEFI Secure Boot ; les ISO Linux courantes en
@@ -209,7 +210,7 @@ la console de la station.
 
 ### Phase 6 — Paquet et recette · taille M
 
-- `.deb` (`dnsmasq-base`, `lighttpd`, `ipxe`, `7zip`, `python3`) : unité systemd, service démarré
+- `.deb` (`dnsmasq-base`, `lighttpd`, `7zip`, `python3`) : unité systemd, service démarré
   à l'installation, serveur web par défaut de lighttpd désactivé seulement s'il vient d'être
   installé (§14, P3)
 - release GitHub ; ligne `GatorTools/GatorPXE` dans `logiciels.txt` du dépôt APT ; page
@@ -236,7 +237,7 @@ phases 2 à 4 ne font qu'y ajouter des entrées.
 
 ## 5. Premier pas concret
 
-1. Installer sur la station `dnsmasq-base`, `lighttpd`, `ipxe` et `7zip`.
+1. Installer sur la station `dnsmasq-base`, `lighttpd` et `7zip`.
 2. `outils/reseau-essai.sh` : le pont isolé, sa sortie par NAT, et un poste QEMU UEFI
    Secure Boot qui prend son adresse sur le pont.
 3. Le shim et l'iPXE signés, servis à la main par un dnsmasq en proxy : voir le poste

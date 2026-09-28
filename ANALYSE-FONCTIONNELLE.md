@@ -10,6 +10,7 @@ seul.
 |------|------|--------|------------|
 | 0.1 | 2026-09-28 | Kevin + Claude | Première rédaction, à partir de la description du projet et des choix validés un à un : Python, service et outil de réglage séparés, interface texte, lighttpd, iPXE signé, proxy DHCP, formats d'images, renvois, emplacements |
 | 0.2 | 2026-09-28 | Kevin + Claude | Relecture : délai de 10 s sur le disque local confirmé (§5), 7zip retenu pour les ISO Windows (§14), §16 expliqué |
+| 0.3 | 2026-09-28 | Kevin + Claude | iPXE BIOS pris dans les releases d'iPXE comme l'UEFI : le paquet `ipxe` n'est plus une dépendance (§10, §14, §15) |
 
 ---
 
@@ -194,11 +195,11 @@ serveur, s'il y en a un, doit les laisser passer ; l'interface le vérifie et le
   clé à installer. Avec Secure Boot actif, il démarre CloneGator et les Linux signés, les WIM
   (wimboot est signé), les ISO dont le chargeur est signé ; il refuse le reste, ce qui est le rôle
   de Secure Boot.
-- **BIOS** : l'iPXE des dépôts Debian et Ubuntu (Secure Boot n'existe pas en BIOS).
+- **BIOS** : l'iPXE des mêmes releases officielles (Secure Boot n'existe pas en BIOS).
 - Certains PC récents refusent par défaut l'autorité tierce de Microsoft (« Allow Microsoft 3rd
   Party UEFI CA ») : il faut l'autoriser dans leur BIOS, comme pour tout Linux.
 
-L'iPXE signé et wimboot ne sont pas dans les dépôts Debian et Ubuntu : le service les télécharge
+iPXE 2.0 et wimboot ne sont pas dans les dépôts Debian et Ubuntu : le service les télécharge
 depuis les releases officielles d'iPXE, comme il le fait pour CloneGator. C'est la seule exception
 à la règle « rien hors des dépôts » (§15).
 
@@ -254,7 +255,7 @@ sudo apt install gatorpxe
 ```
 
 - dépendances : `python3`, `dnsmasq-base` (le programme seul, sans le service système),
-  `lighttpd`, `ipxe`, `7zip` (pour extraire les fichiers d'une ISO Windows : elles sont au format
+  `lighttpd`, `7zip` (pour extraire les fichiers d'une ISO Windows : elles sont au format
   UDF, que 7zip lit sans monter l'image) ;
 - à l'installation : le service démarre, proxy DHCP actif ; si lighttpd n'était pas installé avant,
   son serveur web par défaut (port 80) est désactivé, jamais s'il l'était déjà (P3) ;
@@ -265,7 +266,7 @@ sudo apt install gatorpxe
 Les mêmes que CloneGator :
 
 - **Python 3, bibliothèque standard seule.** Aucune dépendance hors des dépôts Debian et Ubuntu,
-  sauf l'iPXE signé et wimboot, téléchargés depuis les releases d'iPXE (§10).
+  sauf iPXE et wimboot, téléchargés depuis les releases d'iPXE (§10).
 - **Python orchestre, il ne sert pas.** Les fichiers passent par dnsmasq et lighttpd.
 - **Un seul point de passage vers le système**, pour tous les appels de commandes et lectures de
   `/sys` et `/proc`, avec un délai sur chaque commande et un journal verbatim.
