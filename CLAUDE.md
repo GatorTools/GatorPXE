@@ -74,7 +74,10 @@ Organisation GitHub `GatorTools`, compte `kevin-belanger` (administrateur),
 ## Environnement
 
 Station de test sous Ubuntu 24.04, **root comme seul utilisateur**, commandes
-sans `sudo`. Cinq SSD d'essai dans les baies, sacrifiables. Pas de
+sans `sudo`. Cinq SSD d'essai dans les baies, sacrifiables. **Le réseau de
+la station porte un WDS de production** : jamais de proxy DHCP ni de serveur de
+démarrage sur une carte physique ; tous les essais se font dans le réseau de VM
+isolé du plan (§1.2), qui ne sort que par NAT. Pas de
 virtualisation matérielle : QEMU tourne en émulation (lent, mais utilisable
 pour démarrer un poste virtuel en PXE). Partage réseau d'essai de Kevin :
 `//10.150.19.15/kevin`, identifiants dans

@@ -6,6 +6,7 @@ Les renvois `§n` pointent vers l'analyse.
 | Rév. | Date | Auteur | Changement |
 |------|------|--------|------------|
 | 0.1 | 2026-09-28 | Kevin + Claude | Découpage initial en modules et en phases |
+| 0.2 | 2026-09-28 | Kevin + Claude | Le réseau de la station porte un WDS de production : tous les essais se font dans un réseau de VM isolé, sortie par NAT seulement ; recette sur un réseau physique séparé |
 
 ---
 
@@ -18,12 +19,16 @@ la chaîne qui mène un poste jusqu'au menu : proxy DHCP, chargeur BIOS ou UEFI,
 signés, passage de TFTP à HTTP, boucle d'iPXE évitée. Elle passe en premier, avec un menu réduit
 à « Démarrer sur le disque local ». Tout le reste ajoute des entrées à un menu qui s'affiche déjà.
 
-### 1.2 Un réseau d'essai sur la station
+### 1.2 Un réseau d'essai isolé, sur la station
 
-Un proxy DHCP ne s'essaie pas au hasard sur un réseau partagé. Le développement se fait sur un
-**réseau virtuel isolé**, fabriqué sur la station :
+Le réseau où se trouve la station porte **un serveur WDS de production** : il répond lui-même aux
+démarrages réseau. Un proxy DHCP essayé là entrerait en concurrence avec lui, et des postes de
+l'école pourraient démarrer sur GatorPXE. **Aucun essai ne se fait sur ce réseau.** GatorPXE n'y
+est jamais lancé sur une carte physique ; seul le pont d'essai lui est donné.
 
-- un pont (`ip link add … type bridge`), sans carte physique ;
+Tous les essais se font sur un **réseau de VM isolé**, fabriqué sur la station :
+
+- un pont (`ip link add … type bridge`), **sans carte physique** ;
 - un **DHCP « existant »** : un dnsmasq ordinaire, dans son propre espace de noms réseau, qui
   distribue les adresses comme le ferait le DHCP d'une école ;
 - GatorPXE sur le pont, comme sur un serveur ;
@@ -34,8 +39,12 @@ QEMU tourne en émulation : lent, mais un démarrage réseau jusqu'au menu prend
 démarrages lourds (Windows PE, CloneGator) se mesurent en minutes ; on les réserve aux essais de
 fin de phase.
 
-Le **vrai réseau** vient ensuite, avec l'accord de Kevin à chaque fois : de vrais postes, de
-vrais DHCP (§16).
+Le pont **sort par NAT** vers le réseau de l'école, dans ce sens seulement : les postes QEMU
+atteignent Internet et le partage d'essai, mais aucune diffusion — DHCP, démarrage réseau — ne
+franchit la station, dans un sens comme dans l'autre.
+
+Les essais sur de **vrais postes** se font sur un réseau physique séparé : un commutateur relié
+à une carte libre de la station (`enp5s0` ou `eno1`), qui ne touche pas au réseau de l'école.
 
 ### 1.3 Une seule couche touche le système
 
@@ -134,7 +143,7 @@ son système par HTTP (`fetch=` de `live-boot`).
 - l'entrée CloneGator en tête du menu, retirable dans les réglages
 
 **Fini quand** : CloneGator démarre par le réseau en BIOS et en UEFI Secure Boot, et y mène une
-sauvegarde vers le partage d'essai.
+sauvegarde vers le partage d'essai, atteint par le NAT.
 
 ### Phase 3 — Les images · taille L
 
@@ -156,8 +165,8 @@ Secure Boot démarre dessus ; le résultat des ISO Linux est consigné ici.
 - dans l'ordre choisi, après les images
 
 **Essais** : iPXE/HTTP vers netboot.xyz ; PXE générique vers un second serveur monté sur le
-réseau d'essai. **WDS demande un vrai serveur WDS** : essai sur un serveur fourni par Kevin, en
-BIOS et en UEFI Secure Boot (§16).
+réseau d'essai. **WDS demande un vrai serveur WDS** : la manière de l'essayer sans toucher au WDS
+de production reste à décider avec Kevin, en BIOS et en UEFI Secure Boot (§16).
 
 **Fini quand** : chaque type de renvoi mène un poste au menu de l'autre serveur.
 
@@ -182,7 +191,7 @@ la console de la station.
   `gatorpxe/` du site mise à jour
 
 **Recette** : sur un Ubuntu 24.04 et un Debian 13 neufs, installation par apt, puis démarrage de
-vrais postes sur le réseau de Kevin, à côté de son DHCP (§16).
+vrais postes sur le réseau physique séparé (§1.2), à côté d'un DHCP ordinaire (§16).
 
 **Fini quand** : un serveur neuf, installé par `apt install gatorpxe` sans rien régler, fait
 démarrer de vrais postes sur CloneGator et sur une image déposée.
@@ -203,8 +212,8 @@ phases 2 à 4 ne font qu'y ajouter des entrées.
 ## 5. Premier pas concret
 
 1. Installer sur la station `dnsmasq-base`, `lighttpd`, `ipxe` et `7zip`.
-2. `outils/reseau-essai.sh`, et un poste QEMU UEFI Secure Boot qui prend son adresse sur le
-   pont.
+2. `outils/reseau-essai.sh` : le pont isolé, sa sortie par NAT, et un poste QEMU UEFI
+   Secure Boot qui prend son adresse sur le pont.
 3. Le shim et l'iPXE signés, servis à la main par un dnsmasq en proxy : voir le poste
    Secure Boot atteindre une invite iPXE. C'est le point le plus incertain de toute la chaîne ;
    il passe avant le reste du socle.
