@@ -1,6 +1,6 @@
 # GatorPXE — Plan de développement
 
-Compagnon de [ANALYSE-FONCTIONNELLE.md](ANALYSE-FONCTIONNELLE.md), révision 0.6.
+Compagnon de [ANALYSE-FONCTIONNELLE.md](ANALYSE-FONCTIONNELLE.md), révision 0.7.
 Les renvois `§n` pointent vers l'analyse.
 
 | Rév. | Date | Auteur | Changement |
@@ -12,6 +12,7 @@ Les renvois `§n` pointent vers l'analyse.
 | 0.5 | 2026-09-28 | Claude | Phase 1 faite, en attente de la revue de Kevin. Analyse 0.4 |
 | 0.6 | 2026-09-28 | Kevin + Claude | Phase 2 faite, en attente de revue : CloneGator publie `clonegator-live-pxe.tar` (sa révision 1.6), GatorPXE le sert. Analyse 0.5 |
 | 0.7 | 2026-09-28 | Claude | Phase 3 commencée sans les images Windows, qui viendront de Kevin. Analyse 0.6 |
+| 0.8 | 2026-09-28 | Kevin + Claude | Analyse 0.7 : examen des ISO par 7zip et marques au menu (module `examen`) |
 
 ---
 
@@ -82,6 +83,7 @@ gatorpxe/
   telechargements.py  iPXE, wimboot, CloneGator : téléchargement, vérification,
                    dernière version gardée hors ligne
   images.py        inventaire du dossier : type, nom affiché, sous-dossiers, fichiers ignorés
+  examen.py        ce qu'une ISO laisse prévoir : famille Linux, chargeur UEFI signé ou non
   windows.py       extraction des ISO Windows par 7zip, une fois, dans /var/lib/gatorpxe
   renvois.py       WDS, iPXE/HTTP, PXE générique (§8)
   menu.py          le script iPXE du menu, à partir de l'inventaire et des réglages
@@ -236,8 +238,9 @@ Secure Boot démarre dessus ; le résultat des ISO Linux est consigné ici.
 noms nettoyés, sous-menus avec retour, fichiers écartés et leur raison, image en cours de copie
 retenue seulement une fois stable ; wimboot 2.9.0 téléchargé (signé par l'autorité UEFI de
 Microsoft) ; menu des ISO (sanboot), WIM (wimboot) et EFI (entrée masquée en BIOS) ; un
-démarrage qui échoue ramène au menu. Résultat des ISO Linux : analyse §6. Restent l'ISO
-Windows 11 et le WIM, que Kevin fournit.
+démarrage qui échoue ramène au menu. Résultat des ISO Linux : analyse §6 ; les ISO sont
+examinées par 7zip (quelques millisecondes, même pour 4 Go) et marquées au menu, ce qui retrouve
+exactement les résultats des essais. Restent l'ISO Windows 11 et le WIM, que Kevin fournit.
 
 Enseignements :
 

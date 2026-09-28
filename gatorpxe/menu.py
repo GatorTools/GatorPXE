@@ -52,11 +52,17 @@ class _Script:
         for image in dossier.images:
             etiquette = self.identifiant("i")
             texte = f"{ascii(image.nom)} ({image.type})"
+            marques = [] if image.reseau else [t("incompatible réseau")]
+            en_uefi = marques + ([] if image.secure_boot else [t("sans Secure Boot")])
             if image.type == images.EFI:
                 # Un programme EFI ne démarre pas en BIOS : l'entrée n'y paraît pas.
-                items.append(f"iseq ${{platform}} efi && item {etiquette} {texte} ||")
+                items.append(f"iseq ${{platform}} efi && item {etiquette} {_marque(texte, en_uefi)} ||")
+            elif en_uefi != marques:
+                # « sans Secure Boot » ne concerne que l'UEFI.
+                items.append(f"iseq ${{platform}} efi && item {etiquette} {_marque(texte, en_uefi)} || "
+                             f"item {etiquette} {_marque(texte, marques)}")
             else:
-                items.append(f"item {etiquette} {texte}")
+                items.append(f"item {etiquette} {_marque(texte, marques)}")
             self.actions.append([f":{etiquette}", *_ou_echec(self.demarrer(image))])
         return items
 
@@ -137,6 +143,10 @@ def script_menu(reglages: config.Reglages, adresse_http: str, clonegator: bool =
         "",
     ]
     return "\n".join(lignes)
+
+
+def _marque(texte: str, marques: list[str]) -> str:
+    return f"{texte} - {ascii(', '.join(marques))}" if marques else texte
 
 
 def _ou_echec(commandes: list[str]) -> list[str]:

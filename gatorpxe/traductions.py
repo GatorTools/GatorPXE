@@ -14,4 +14,6 @@ ANGLAIS: dict[str, str] = {
     "Retour": "Back",
     "Le démarrage a échoué.": "Boot failed.",
     "Appuyez sur une touche pour revenir au menu.": "Press a key to return to the menu.",
+    "incompatible réseau": "no network boot",
+    "sans Secure Boot": "no Secure Boot",
 }

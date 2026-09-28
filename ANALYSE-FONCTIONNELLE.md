@@ -14,6 +14,7 @@ seul.
 | 0.4 | 2026-09-28 | Claude | Essais de la phase 1 : réglages exacts du DHCP réglé à la main, condition nécessaire en BIOS seulement (§9, §16) |
 | 0.5 | 2026-09-28 | Kevin + Claude | CloneGator publie son démarrage réseau avec chaque release, shim de Debian compris ; GatorPXE le prend là (§7) |
 | 0.6 | 2026-09-28 | Claude | Essais des ISO en sanboot : l'ISO n'est pas chargée en mémoire, et les ISO Linux courantes ne retrouvent pas leur support (§6, §16) |
+| 0.7 | 2026-09-28 | Kevin + Claude | Sanboot gardé en première version ; les ISO sont examinées et marquées au menu, « incompatible réseau » et « sans Secure Boot » (§6) |
 
 ---
 
@@ -154,6 +155,18 @@ qui relit ensuite son support échoue. Essais sur le réseau d'essai, BIOS et UE
 | Alpine 3.24 | le noyau démarre, puis ne trouve pas son support ; refusée par Secure Boot (chargeur non signé) |
 
 Un démarrage qui échoue ramène au menu, après un message.
+
+**Les ISO sont examinées** une fois, sans être démarrées : `7z` liste leur contenu et en extrait
+le chargeur UEFI. Le menu marque :
+
+- « incompatible réseau » : l'ISO porte le dossier d'une famille Linux qui relit son support
+  après le démarrage (`casper/` d'Ubuntu, `live/` de Debian live, `LiveOS/` de Fedora,
+  `install.amd/` de l'installeur Debian, `arch/`, `apks/` d'Alpine) ;
+- « sans Secure Boot », en UEFI seulement : son chargeur UEFI n'est pas signé par l'autorité UEFI
+  de Microsoft.
+
+Les ISO marquées restent au menu : la détection repère des familles connues, elle ne garantit
+rien. Une ISO sans indice est présentée sans marque.
 
 ## 7. CloneGator
 

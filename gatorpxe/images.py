@@ -38,6 +38,9 @@ class Image:
     chemin: str  # relatif au dossier d'images, séparé par des /
     nom: str  # nom affiché, sans son type
     type: str
+    # Ce que l'examen d'une ISO laisse prévoir (module examen), rempli par le service.
+    reseau: bool = True  # False : ne démarrera pas par le réseau
+    secure_boot: bool = True  # False : refusée par Secure Boot
 
 
 @dataclass

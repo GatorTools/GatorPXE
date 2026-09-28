@@ -16,7 +16,7 @@ import threading
 import time
 from typing import Callable
 
-from . import chemins, config, dnsmasq, images, journal, langue, lighttpd, menu, reseau, sysexec, telechargements
+from . import chemins, config, dnsmasq, examen, images, journal, langue, lighttpd, menu, reseau, sysexec, telechargements
 
 _log = logging.getLogger("gatorpxe.service")
 
@@ -65,6 +65,7 @@ class Service:
         self.attente_signalee = ""
         self.inventaire = images.Inventaire(None)
         self.empreintes: dict[str, tuple[int, int]] | None = None
+        self.examens: dict[str, tuple[tuple[int, int], examen.Examen]] = {}
 
     def tourner(self) -> None:
         signal.signal(signal.SIGHUP, lambda *_: setattr(self, "a_relire", True))
@@ -160,6 +161,7 @@ class Service:
         avant = self.inventaire
         self.inventaire = images.inventaire(dossier, self.empreintes)
         self.empreintes = self.inventaire.empreintes
+        self.examiner(dossier, self.inventaire.racine)
         if self.inventaire.racine is None and avant.racine is not None:
             _log.warning("dossier d'images introuvable : %s", dossier)
         elif self.inventaire.racine is not None and avant.racine is None:
@@ -172,6 +174,25 @@ class Service:
         ecartes = {(e.chemin, e.raison) for e in self.inventaire.ecartes if e.raison != images.EN_COPIE}
         for chemin, raison in sorted(ecartes - {(e.chemin, e.raison) for e in avant.ecartes}):
             _log.info("fichier écarté : %s (%s)", chemin, raison)
+
+    def examiner(self, racine: str, dossier: images.Dossier | None) -> None:
+        """Les marques des ISO : un examen par fichier, gardé tant que le
+        fichier ne change pas."""
+        if dossier is None:
+            return
+        for sous in dossier.dossiers:
+            self.examiner(racine, sous)
+        for image in dossier.images:
+            if image.type != images.ISO:
+                continue
+            empreinte = self.empreintes[image.chemin]
+            memoire = self.examens.get(image.chemin)
+            if not memoire or memoire[0] != empreinte:
+                memoire = (empreinte, examen.examiner(os.path.join(racine, image.chemin)))
+                self.examens[image.chemin] = memoire
+            resultat = memoire[1]
+            image.reseau = resultat.famille is None
+            image.secure_boot = resultat.signe is not False
 
     def preparer(self, chargeurs: str, adresse_http: str) -> None:
         """Les fichiers servis : chargeurs iPXE et relais en TFTP ; menu et

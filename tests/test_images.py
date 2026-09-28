@@ -106,3 +106,31 @@ class MenuImages(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Examen(unittest.TestCase):
+    def test_familles(self):
+        from gatorpxe import examen
+        self.assertEqual(examen.famille(["casper/vmlinuz", "EFI/boot/bootx64.efi"]), "Ubuntu")
+        self.assertEqual(examen.famille(["install.amd/vmlinuz", "pool/main"]), "installeur Debian")
+        self.assertEqual(examen.famille(["images/install.img"]), "Fedora")
+        self.assertIsNone(examen.famille(["ipxe.lkrn", "isolinux/isolinux.bin"]))
+        # Un dossier « images » ne suffit pas : il faut install.img dedans.
+        self.assertIsNone(examen.famille(["images/pxeboot"]))
+
+    def test_signature(self):
+        from gatorpxe import examen
+        self.assertFalse(examen.signe_par_microsoft(b"pas un programme"))
+
+
+class Marques(unittest.TestCase):
+    def test_marques_au_menu(self):
+        dossier = images.Dossier("", "", images=[
+            images.Image("alpine.iso", "alpine", images.ISO, reseau=False, secure_boot=False),
+            images.Image("debian.iso", "debian", images.ISO, reseau=False),
+            images.Image("outil.iso", "outil", images.ISO)])
+        script = menu.script_menu(config.Reglages(), HTTP, inventaire=dossier)
+        self.assertIn("alpine (ISO) - no network boot, no Secure Boot || item", script)
+        self.assertIn("alpine (ISO) - no network boot\n", script)
+        self.assertIn("debian (ISO) - no network boot\n", script)
+        self.assertIn("outil (ISO)\n", script)
