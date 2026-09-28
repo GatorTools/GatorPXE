@@ -5,8 +5,8 @@ serveur Debian ou Ubuntu, il propose aux postes du réseau un menu construit
 tout seul — CloneGator, des images démarrables déposées dans un dossier, des
 renvois vers d'autres serveurs (WDS…).
 
-**État : phase 1 faite.** Analyse fonctionnelle (révision 0.4) et plan de
-développement (révision 0.5) ; phase 1 faite, en attente de la revue de Kevin.
+**État : phase 2 faite.** Analyse fonctionnelle (révision 0.5) et plan de
+développement (révision 0.6) ; phases 1 et 2 faites, en attente de la revue de Kevin.
 
 ## Les documents font foi
 
@@ -65,9 +65,10 @@ Organisation GitHub `GatorTools`, compte `kevin-belanger` (administrateur),
   doivent porter des paquets nommés `nom_version_architecture.deb`. La clé de
   signature est le secret `CLE_SIGNATURE` du dépôt `apt` (copie hors ligne
   chez Kevin).
-- **CloneGator** : ce dont GatorPXE a besoin de lui est au §17 de son analyse —
-  joindre aux releases les fichiers de démarrage réseau du live (noyau, initrd,
-  système compressé), que `outils/construire-live.sh` produit déjà.
+- **CloneGator** : chaque release porte `clonegator-live-pxe.tar` (shim signé de
+  Debian, noyau, initrd, système compressé), le démarrage réseau de son live,
+  publié pour n'importe quel serveur PXE (§15 de son analyse). GatorPXE le prend
+  là ; CloneGator ne sait rien de GatorPXE, et doit le rester.
 - **Site** : la page `gatorpxe/` présente le projet « en préparation » ; la
   mettre à jour quand il deviendra disponible.
 

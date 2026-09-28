@@ -10,7 +10,9 @@ from __future__ import annotations
 
 import logging
 import os
+import shutil
 import signal
+import threading
 import time
 from typing import Callable
 
@@ -58,6 +60,8 @@ class Service:
         self.en_marche = True
         self.reglages = config.Reglages()
         self.derniere_recherche = 0.0
+        self.derniere_recherche_clonegator = 0.0
+        self.telechargement: threading.Thread | None = None
         self.attente_signalee = ""
 
     def tourner(self) -> None:
@@ -85,10 +89,12 @@ class Service:
             langue.choisir(self.reglages.langue)
             _log.info("réglages lus : %s", self.reglages)
 
-        if time.monotonic() - self.derniere_recherche > MISE_A_JOUR or not telechargements.ipxe_version():
+        ipxe = telechargements.IPXE
+        if time.monotonic() - self.derniere_recherche > MISE_A_JOUR or not ipxe.version():
             self.derniere_recherche = time.monotonic()
-            telechargements.ipxe_mettre_a_jour()
-        chargeurs = telechargements.ipxe_dossier()
+            telechargements.mettre_a_jour(ipxe)
+        chargeurs = ipxe.actuel()
+        self.suivre_clonegator()
 
         carte = self.reglages.carte or reseau.carte_principale()
         adresse = reseau.adresse(carte) if carte else None
@@ -121,17 +127,45 @@ class Service:
             dnsmasq.commande,
         )
 
+    def suivre_clonegator(self) -> None:
+        """CloneGator, une fois par jour, en arrière-plan : ses 250 Mo
+        n'empêchent pas le service de servir les postes. Retiré du menu, il
+        n'est plus téléchargé."""
+        if not self.reglages.clonegator or (self.telechargement and self.telechargement.is_alive()):
+            return
+        premiere_fois = not telechargements.CLONEGATOR.version()
+        # Sans Internet, une nouvelle tentative toutes les heures tant qu'aucune version n'est là.
+        delai = 3600 if premiere_fois else MISE_A_JOUR
+        if self.derniere_recherche_clonegator and time.monotonic() - self.derniere_recherche_clonegator < delai:
+            return
+        self.derniere_recherche_clonegator = time.monotonic()
+        self.telechargement = threading.Thread(
+            target=telechargements.mettre_a_jour, args=(telechargements.CLONEGATOR,),
+            name="clonegator", daemon=True)
+        self.telechargement.start()
+
     def preparer(self, chargeurs: str, adresse_http: str) -> None:
-        """Les fichiers servis : chargeurs iPXE et relais en TFTP, menu en HTTP."""
-        for nom in telechargements.IPXE_FICHIERS.values():
+        """Les fichiers servis : chargeurs iPXE et relais en TFTP ; menu et
+        CloneGator en HTTP."""
+        for nom in telechargements.IPXE.fichiers.values():
             with open(os.path.join(chargeurs, nom), "rb") as fichier:
                 if chemins.ecrire_si_change(os.path.join(chemins.TFTP, nom), fichier.read()):
                     _log.info("chargeur %s mis en place", nom)
         relais = menu.script_relais(adresse_http)
         chemins.ecrire_si_change(os.path.join(chemins.TFTP, dnsmasq.RELAIS), relais)
         chemins.ecrire_si_change(os.path.join(chemins.TFTP, "autoexec.ipxe"), relais)
+
+        # CloneGator est servi par un lien vers sa version en service.
+        lien = os.path.join(chemins.HTTP, "clonegator")
+        present = bool(telechargements.CLONEGATOR.version())
+        if present and not os.path.islink(lien):
+            if os.path.lexists(lien):
+                shutil.rmtree(lien)
+            os.symlink(os.path.join(chemins.CLONEGATOR, "actuel"), lien)
+        elif not present and os.path.lexists(lien):
+            os.remove(lien) if os.path.islink(lien) else shutil.rmtree(lien)
         if chemins.ecrire_si_change(os.path.join(chemins.HTTP, "menu.ipxe"),
-                                    menu.script_menu(self.reglages)):
+                                    menu.script_menu(self.reglages, adresse_http, present)):
             _log.info("menu reconstruit")
 
 

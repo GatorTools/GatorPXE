@@ -12,6 +12,7 @@ seul.
 | 0.2 | 2026-09-28 | Kevin + Claude | Relecture : délai de 10 s sur le disque local confirmé (§5), 7zip retenu pour les ISO Windows (§14), §16 expliqué |
 | 0.3 | 2026-09-28 | Kevin + Claude | iPXE BIOS pris dans les releases d'iPXE comme l'UEFI : le paquet `ipxe` n'est plus une dépendance (§10, §14, §15) |
 | 0.4 | 2026-09-28 | Claude | Essais de la phase 1 : réglages exacts du DHCP réglé à la main, condition nécessaire en BIOS seulement (§9, §16) |
+| 0.5 | 2026-09-28 | Kevin + Claude | CloneGator publie son démarrage réseau avec chaque release, shim de Debian compris ; GatorPXE le prend là (§7) |
 
 ---
 
@@ -147,17 +148,16 @@ démarre pas sur un poste de 4 Go.
 
 CloneGator figure au menu par défaut ; on peut l'en retirer dans l'interface. Il ne passe pas par
 son ISO : GatorPXE sert les fichiers de démarrage réseau de son live — noyau, initrd, système
-compressé — et le live charge son système par HTTP. C'est plus léger et plus sûr qu'une ISO, et
-Secure Boot l'accepte (noyau signé de Debian).
+compressé, et le shim signé de Debian — et le live charge son système par HTTP. C'est plus léger
+et plus sûr qu'une ISO. Secure Boot l'accepte : en UEFI, iPXE confie le noyau signé de Debian au
+shim de Debian, seul à pouvoir le vérifier.
 
-Le service télécharge ces fichiers depuis les releases de CloneGator et les tient à jour, une fois
-par jour. Sans accès à Internet, il garde la dernière version obtenue ; l'interface dit laquelle.
+Le service télécharge ces fichiers depuis les releases de CloneGator (`clonegator-live-pxe.tar`,
+publiée avec chaque release comme pour n'importe quel serveur PXE) et les tient à jour, une fois
+par jour, en arrière-plan. Retiré du menu, CloneGator n'est plus téléchargé. Sans accès à Internet, il garde la dernière version obtenue ; l'interface dit laquelle.
 
 Restaurer une sauvegarde passe par CloneGator lui-même : Restaurer, le partage réseau où sont les
 sauvegardes, la sauvegarde, le disque. GatorPXE ne lit pas les sauvegardes.
-
-**Côté CloneGator**, il faudra joindre aux releases ces trois fichiers, que sa construction produit
-déjà.
 
 ## 8. Les renvois vers d'autres serveurs
 

@@ -6,6 +6,7 @@ import unittest
 from gatorpxe import config, dnsmasq, langue, menu
 
 ADRESSE = ipaddress.IPv4Interface("192.168.199.1/24")
+HTTP = "http://192.168.199.1:8069"
 
 
 class Menu(unittest.TestCase):
@@ -13,23 +14,35 @@ class Menu(unittest.TestCase):
         langue.choisir(langue.ANGLAIS)
 
     def test_disque_local_par_defaut_apres_le_delai(self):
-        script = menu.script_menu(config.Reglages(delai=10))
+        script = menu.script_menu(config.Reglages(delai=10), HTTP)
         self.assertTrue(script.startswith("#!ipxe\n"))
         self.assertIn("choose --default disque --timeout 10000 cible", script)
         self.assertIn("Boot from local disk", script)
 
     def test_sans_delai_le_menu_attend(self):
-        self.assertNotIn("--timeout", menu.script_menu(config.Reglages(delai=0)))
+        self.assertNotIn("--timeout", menu.script_menu(config.Reglages(delai=0), HTTP))
 
     def test_uefi_rend_la_main_sur_un_echec(self):
         # Sur une réussite, EDK2 ouvre son menu au lieu de passer au disque.
-        self.assertIn("iseq ${platform} efi && exit 1 ||", menu.script_menu(config.Reglages()))
+        self.assertIn("iseq ${platform} efi && exit 1 ||", menu.script_menu(config.Reglages(), HTTP))
 
     def test_francais_sans_accents(self):
         langue.choisir(langue.FRANCAIS)
-        script = menu.script_menu(config.Reglages())
+        script = menu.script_menu(config.Reglages(), HTTP)
         self.assertIn("Demarrer sur le disque local", script)
         self.assertTrue(all(ord(c) < 128 for c in script.split("\n", 2)[2]))
+
+    def test_clonegator_en_tete_quand_il_est_la(self):
+        script = menu.script_menu(config.Reglages(), HTTP, clonegator=True)
+        self.assertLess(script.index("item clonegator"), script.index("item disque"))
+        # Le shim de Debian en UEFI seulement : la commande n'existe pas en BIOS.
+        self.assertIn("iseq ${platform} efi && shim clonegator/shimx64.efi ||", script)
+        self.assertIn(f"fetch={HTTP}/clonegator/filesystem.squashfs", script)
+
+    def test_clonegator_absent_ou_retire(self):
+        self.assertNotIn("clonegator", menu.script_menu(config.Reglages(), HTTP, clonegator=False))
+        retire = config.Reglages(clonegator=False)
+        self.assertNotIn("clonegator", menu.script_menu(retire, HTTP, clonegator=True))
 
     def test_relais(self):
         self.assertEqual(menu.script_relais("http://192.168.199.1:8069"),

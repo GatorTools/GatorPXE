@@ -1,6 +1,6 @@
 # GatorPXE — Plan de développement
 
-Compagnon de [ANALYSE-FONCTIONNELLE.md](ANALYSE-FONCTIONNELLE.md), révision 0.4.
+Compagnon de [ANALYSE-FONCTIONNELLE.md](ANALYSE-FONCTIONNELLE.md), révision 0.5.
 Les renvois `§n` pointent vers l'analyse.
 
 | Rév. | Date | Auteur | Changement |
@@ -10,6 +10,7 @@ Les renvois `§n` pointent vers l'analyse.
 | 0.3 | 2026-09-28 | Claude | Phase 0 faite, en attente de la revue de Kevin : réseau d'essai, socle, et la chaîne Secure Boot essayée à la main jusqu'au menu |
 | 0.4 | 2026-09-28 | Kevin + Claude | Analyse 0.3 : iPXE BIOS pris dans les releases d'iPXE ; wimboot passe en phase 3, où il sert. Phase 1 commencée |
 | 0.5 | 2026-09-28 | Claude | Phase 1 faite, en attente de la revue de Kevin. Analyse 0.4 |
+| 0.6 | 2026-09-28 | Kevin + Claude | Phase 2 faite, en attente de revue : CloneGator publie `clonegator-live-pxe.tar` (sa révision 1.6), GatorPXE le sert. Analyse 0.5 |
 
 ---
 
@@ -187,18 +188,34 @@ Enseignements :
 - dnsmasq et lighttpd abandonnent root : lighttpd avant d'ouvrir ses journaux, que le service
   crée donc d'avance à son nom.
 
-### Phase 2 — CloneGator au menu · taille M
+### Phase 2 — CloneGator au menu · taille M · **faite, en attente de revue**
 
-**Côté CloneGator d'abord** (son §17) : joindre aux releases le noyau, l'initrd et le système
-compressé du live, que `outils/construire-live.sh` produit déjà dans `dist/`. Le live charge
-son système par HTTP (`fetch=` de `live-boot`).
+**Côté CloneGator d'abord** (son §15) : publier avec chaque release le démarrage réseau du live,
+comme pour n'importe quel serveur PXE. Le live charge son système par HTTP (`fetch=` de
+`live-boot`).
 
-- `telechargements` : les trois fichiers de la dernière release, mise à jour quotidienne,
-  dernière version gardée sans Internet
+- `telechargements` : l'archive de la dernière release, mise à jour quotidienne en
+  arrière-plan, dernière version gardée sans Internet
 - l'entrée CloneGator en tête du menu, retirable dans les réglages
 
 **Fini quand** : CloneGator démarre par le réseau en BIOS et en UEFI Secure Boot, et y mène une
 sauvegarde vers le partage d'essai, atteint par le NAT.
+
+**Où on en est (2026-09-28).** Côté CloneGator : `construire-live.sh` produit
+`clonegator-live-pxe_<version>.tar` (shim signé de Debian, noyau, initrd, système compressé) ;
+l'archive est jointe à la release en cours, avec sa copie `clonegator-live-pxe.tar`, et la page
+Télécharger la présente. Côté GatorPXE : le service la télécharge (250 Mo, 5 s), la range dans
+`/var/lib/gatorpxe/clonegator/<version>`, et le menu propose CloneGator en tête. Sur le réseau
+d'essai, CloneGator démarre par le réseau en BIOS et en UEFI Secure Boot, sans disque ; depuis
+le poste Secure Boot, une sauvegarde de 253 Mo vers le partage d'essai réussit en 14 s.
+
+Enseignements :
+
+- Secure Boot refuse le noyau de Debian chargé par l'iPXE signé : seul le shim de Debian sait le
+  vérifier. La commande `shim` d'iPXE le charge d'abord ; CloneGator publie donc son shim avec
+  les trois autres fichiers. En BIOS, la commande n'existe pas : elle est réservée à l'UEFI.
+- L'iPXE de certaines cartes réseau (1.21, celui de QEMU) ignore `${cwduri}` : le menu écrit les
+  adresses en entier.
 
 ### Phase 3 — Les images · taille L
 
