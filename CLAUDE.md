@@ -5,13 +5,13 @@ serveur Debian ou Ubuntu, il propose aux postes du réseau un menu construit
 tout seul — CloneGator, des images démarrables déposées dans un dossier, des
 renvois vers d'autres serveurs (WDS…).
 
-**État : rien n'est codé.** L'analyse fonctionnelle est écrite (révision 0.2) ;
-Kevin doit la relire, puis viendra le plan de développement.
+**État : rien n'est codé.** Analyse fonctionnelle (révision 0.2) et plan de
+développement (révision 0.1) écrits ; prochaine étape : la phase 0.
 
 ## Les documents font foi
 
 - [ANALYSE-FONCTIONNELLE.md](ANALYSE-FONCTIONNELLE.md) — ce que le logiciel doit faire
-- `PLAN-DE-DEVELOPPEMENT.md` — dans quel ordre on le construit (à écrire)
+- [PLAN-DE-DEVELOPPEMENT.md](PLAN-DE-DEVELOPPEMENT.md) — dans quel ordre on le construit
 
 Ce sont des **documents vivants**. Quand une décision les contredit, les mettre
 à jour — signaler la contradiction en une phrase, livrer, puis réécrire la
