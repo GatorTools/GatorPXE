@@ -16,7 +16,7 @@ import threading
 import time
 from typing import Callable
 
-from . import chemins, config, dnsmasq, journal, langue, lighttpd, menu, reseau, sysexec, telechargements
+from . import chemins, config, dnsmasq, images, journal, langue, lighttpd, menu, reseau, sysexec, telechargements
 
 _log = logging.getLogger("gatorpxe.service")
 
@@ -63,6 +63,8 @@ class Service:
         self.derniere_recherche_clonegator = 0.0
         self.telechargement: threading.Thread | None = None
         self.attente_signalee = ""
+        self.inventaire = images.Inventaire(None)
+        self.empreintes: dict[str, tuple[int, int]] | None = None
 
     def tourner(self) -> None:
         signal.signal(signal.SIGHUP, lambda *_: setattr(self, "a_relire", True))
@@ -90,9 +92,11 @@ class Service:
             _log.info("réglages lus : %s", self.reglages)
 
         ipxe = telechargements.IPXE
-        if time.monotonic() - self.derniere_recherche > MISE_A_JOUR or not ipxe.version():
+        if (time.monotonic() - self.derniere_recherche > MISE_A_JOUR
+                or not ipxe.version() or not telechargements.WIMBOOT.version()):
             self.derniere_recherche = time.monotonic()
             telechargements.mettre_a_jour(ipxe)
+            telechargements.mettre_a_jour(telechargements.WIMBOOT)
         chargeurs = ipxe.actuel()
         self.suivre_clonegator()
 
@@ -116,11 +120,13 @@ class Service:
             _log.info("fin de l'attente : carte %s, adresse %s", carte, adresse)
             self.attente_signalee = ""
 
+        self.balayer()
         self.preparer(chargeurs, f"http://{adresse.ip}:{chemins.PORT_HTTP}")
         acces = os.path.join(journal.RACINE, "http-acces.log")
         erreurs = os.path.join(journal.RACINE, "http-erreurs.log")
         lighttpd.preparer_journaux(acces, erreurs)
-        self.lighttpd.appliquer(lighttpd.reglages(adresse, acces, erreurs), lighttpd.commande)
+        self.lighttpd.appliquer(
+            lighttpd.reglages(adresse, self.reglages.dossier_images, acces, erreurs), lighttpd.commande)
         self.dnsmasq.appliquer(
             dnsmasq.reglages(carte, adresse, self.reglages.proxy_dhcp,
                              os.path.join(journal.RACINE, "dnsmasq.log")),
@@ -144,6 +150,29 @@ class Service:
             name="clonegator", daemon=True)
         self.telechargement.start()
 
+    def balayer(self) -> None:
+        """Le dossier d'images, à chaque tour. Le dossier par défaut est créé ;
+        un dossier choisi ne l'est jamais : ce peut être un disque débranché,
+        et le service attend qu'il revienne (§12)."""
+        dossier = self.reglages.dossier_images
+        if dossier == config.Reglages().dossier_images and not os.path.exists(dossier):
+            os.makedirs(dossier, mode=0o755)
+        avant = self.inventaire
+        self.inventaire = images.inventaire(dossier, self.empreintes)
+        self.empreintes = self.inventaire.empreintes
+        if self.inventaire.racine is None and avant.racine is not None:
+            _log.warning("dossier d'images introuvable : %s", dossier)
+        elif self.inventaire.racine is not None and avant.racine is None:
+            _log.info("dossier d'images : %s", dossier)
+        presentes = _images(self.inventaire.racine)
+        for chemin in sorted(presentes - _images(avant.racine)):
+            _log.info("image ajoutée : %s", chemin)
+        for chemin in sorted(_images(avant.racine) - presentes):
+            _log.info("image retirée : %s", chemin)
+        ecartes = {(e.chemin, e.raison) for e in self.inventaire.ecartes if e.raison != images.EN_COPIE}
+        for chemin, raison in sorted(ecartes - {(e.chemin, e.raison) for e in avant.ecartes}):
+            _log.info("fichier écarté : %s (%s)", chemin, raison)
+
     def preparer(self, chargeurs: str, adresse_http: str) -> None:
         """Les fichiers servis : chargeurs iPXE et relais en TFTP ; menu et
         CloneGator en HTTP."""
@@ -155,18 +184,33 @@ class Service:
         chemins.ecrire_si_change(os.path.join(chemins.TFTP, dnsmasq.RELAIS), relais)
         chemins.ecrire_si_change(os.path.join(chemins.TFTP, "autoexec.ipxe"), relais)
 
-        # CloneGator est servi par un lien vers sa version en service.
-        lien = os.path.join(chemins.HTTP, "clonegator")
-        present = bool(telechargements.CLONEGATOR.version())
-        if present and not os.path.islink(lien):
-            if os.path.lexists(lien):
-                shutil.rmtree(lien)
-            os.symlink(os.path.join(chemins.CLONEGATOR, "actuel"), lien)
-        elif not present and os.path.lexists(lien):
-            os.remove(lien) if os.path.islink(lien) else shutil.rmtree(lien)
+        # CloneGator et wimboot sont servis par un lien vers leur version en service.
+        present = _lier("clonegator", telechargements.CLONEGATOR)
+        _lier("wimboot", telechargements.WIMBOOT)
         if chemins.ecrire_si_change(os.path.join(chemins.HTTP, "menu.ipxe"),
-                                    menu.script_menu(self.reglages, adresse_http, present)):
+                                    menu.script_menu(self.reglages, adresse_http, present,
+                                                     self.inventaire.racine)):
             _log.info("menu reconstruit")
+
+
+def _images(dossier: images.Dossier | None) -> set[str]:
+    if dossier is None:
+        return set()
+    return {i.chemin for i in dossier.images} | set().union(*(_images(d) for d in dossier.dossiers))
+
+
+def _lier(nom: str, paquet: telechargements.Paquet) -> bool:
+    """Le lien `http/<nom>` vers la version en service du paquet ; rend True
+    si elle existe."""
+    lien = os.path.join(chemins.HTTP, nom)
+    present = bool(paquet.version())
+    if present and not os.path.islink(lien):
+        if os.path.lexists(lien):
+            shutil.rmtree(lien)
+        os.symlink(os.path.join(paquet.dossier, "actuel"), lien)
+    elif not present and os.path.lexists(lien):
+        os.remove(lien) if os.path.islink(lien) else shutil.rmtree(lien)
+    return present
 
 
 def lancer() -> int:

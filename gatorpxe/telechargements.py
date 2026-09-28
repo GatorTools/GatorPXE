@@ -1,9 +1,10 @@
 """Ce que le service va chercher sur Internet (§7 et §10 de l'analyse).
 
-Deux paquets, pris dans la dernière release de leur dépôt GitHub :
+Trois paquets, pris dans la dernière release de leur dépôt GitHub :
 
   - iPXE, `ipxeboot.tar.gz` : le shim et l'iPXE signés pour l'UEFI,
     `undionly.kpxe` pour le BIOS ;
+  - wimboot, qui démarre les images Windows (§6), signé pour Secure Boot ;
   - CloneGator, `clonegator-live-pxe.tar` : les fichiers du démarrage réseau de
     son live.
 
@@ -37,6 +38,7 @@ class Paquet:
     archive: str  # le fichier joint à la release
     fichiers: dict[str, str]  # chemin dans l'archive → nom rangé
     dossier: str  # où ranger les versions
+    brut: bool = False  # le fichier joint est le seul fichier, pas une archive
 
     def version(self) -> str | None:
         """La version en service, None si aucune n'a encore été obtenue."""
@@ -60,6 +62,15 @@ IPXE = Paquet(
         "ipxeboot/x86_64/undionly.kpxe": "undionly.kpxe",
     },
     dossier=chemins.IPXE,
+)
+
+WIMBOOT = Paquet(
+    nom="wimboot",
+    depot="ipxe/wimboot",
+    archive="wimboot",
+    fichiers={"wimboot": "wimboot"},
+    dossier=chemins.WIMBOOT,
+    brut=True,
 )
 
 CLONEGATOR = Paquet(
@@ -103,12 +114,18 @@ def mettre_a_jour(paquet: Paquet) -> str | None:
             with _ouvrir(url) as reponse:
                 shutil.copyfileobj(reponse, archive)
             archive.seek(0)
-            with tarfile.open(fileobj=archive, mode="r:*") as tar:
-                for membre, nom in paquet.fichiers.items():
-                    source = tar.extractfile(tar.getmember(membre))
-                    with open(os.path.join(provisoire, nom), "wb") as destination:
-                        shutil.copyfileobj(source, destination)
-                    os.chmod(os.path.join(provisoire, nom), 0o644)
+            if paquet.brut:
+                (nom,) = paquet.fichiers.values()
+                with open(os.path.join(provisoire, nom), "wb") as destination:
+                    shutil.copyfileobj(archive, destination)
+            else:
+                with tarfile.open(fileobj=archive, mode="r:*") as tar:
+                    for membre, nom in paquet.fichiers.items():
+                        source = tar.extractfile(tar.getmember(membre))
+                        with open(os.path.join(provisoire, nom), "wb") as destination:
+                            shutil.copyfileobj(source, destination)
+            for nom in paquet.fichiers.values():
+                os.chmod(os.path.join(provisoire, nom), 0o644)
         os.chmod(provisoire, 0o755)
         dossier = os.path.join(paquet.dossier, version)
         shutil.rmtree(dossier, ignore_errors=True)

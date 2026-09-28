@@ -1,6 +1,6 @@
 # GatorPXE — Plan de développement
 
-Compagnon de [ANALYSE-FONCTIONNELLE.md](ANALYSE-FONCTIONNELLE.md), révision 0.5.
+Compagnon de [ANALYSE-FONCTIONNELLE.md](ANALYSE-FONCTIONNELLE.md), révision 0.6.
 Les renvois `§n` pointent vers l'analyse.
 
 | Rév. | Date | Auteur | Changement |
@@ -11,6 +11,7 @@ Les renvois `§n` pointent vers l'analyse.
 | 0.4 | 2026-09-28 | Kevin + Claude | Analyse 0.3 : iPXE BIOS pris dans les releases d'iPXE ; wimboot passe en phase 3, où il sert. Phase 1 commencée |
 | 0.5 | 2026-09-28 | Claude | Phase 1 faite, en attente de la revue de Kevin. Analyse 0.4 |
 | 0.6 | 2026-09-28 | Kevin + Claude | Phase 2 faite, en attente de revue : CloneGator publie `clonegator-live-pxe.tar` (sa révision 1.6), GatorPXE le sert. Analyse 0.5 |
+| 0.7 | 2026-09-28 | Claude | Phase 3 commencée sans les images Windows, qui viendront de Kevin. Analyse 0.6 |
 
 ---
 
@@ -217,7 +218,7 @@ Enseignements :
 - L'iPXE de certaines cartes réseau (1.21, celui de QEMU) ignore `${cwduri}` : le menu écrit les
   adresses en entier.
 
-### Phase 3 — Les images · taille L
+### Phase 3 — Les images · taille L · **en cours**
 
 - `images` : balayage du dossier toutes les quelques secondes, noms nettoyés, sous-menus,
   fichiers ignorés et pourquoi ; dossier introuvable sans arrêt du service (§12)
@@ -230,6 +231,22 @@ officiels ou du partage d'essai.
 
 **Fini quand** : déposer une ISO Windows 11 fait paraître l'entrée au menu, et le poste
 Secure Boot démarre dessus ; le résultat des ISO Linux est consigné ici.
+
+**Où on en est (2026-09-28).** Fait, sans les images Windows : balayage du dossier à chaque tour,
+noms nettoyés, sous-menus avec retour, fichiers écartés et leur raison, image en cours de copie
+retenue seulement une fois stable ; wimboot 2.9.0 téléchargé (signé par l'autorité UEFI de
+Microsoft) ; menu des ISO (sanboot), WIM (wimboot) et EFI (entrée masquée en BIOS) ; un
+démarrage qui échoue ramène au menu. Résultat des ISO Linux : analyse §6. Restent l'ISO
+Windows 11 et le WIM, que Kevin fournit.
+
+Enseignements :
+
+- Une commande qui échoue interrompt un script iPXE : chaque commande de démarrage renvoie au
+  message d'échec.
+- Au premier balayage, faute de balayage précédent, une image n'est retenue que si elle n'a pas
+  bougé depuis 10 s : sinon, une ISO en cours de copie entrait au menu puis en sortait.
+- sanboot ne charge pas l'ISO en mémoire : il la lit à la demande, et le disque disparaît quand
+  le système démarré prend la main.
 
 ### Phase 4 — Les renvois · taille M
 

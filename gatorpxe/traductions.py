@@ -11,4 +11,7 @@ ANGLAIS: dict[str, str] = {
 
     # -------------------------------------------------- menu de démarrage (§5)
     "Démarrer sur le disque local": "Boot from local disk",
+    "Retour": "Back",
+    "Le démarrage a échoué.": "Boot failed.",
+    "Appuyez sur une touche pour revenir au menu.": "Press a key to return to the menu.",
 }

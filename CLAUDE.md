@@ -5,8 +5,8 @@ serveur Debian ou Ubuntu, il propose aux postes du réseau un menu construit
 tout seul — CloneGator, des images démarrables déposées dans un dossier, des
 renvois vers d'autres serveurs (WDS…).
 
-**État : phase 2 faite.** Analyse fonctionnelle (révision 0.5) et plan de
-développement (révision 0.6) ; phases 1 et 2 faites, en attente de la revue de Kevin.
+**État : phase 3 en cours.** Analyse fonctionnelle (révision 0.6) et plan de
+développement (révision 0.7) ; phases 1 et 2 faites, en attente de la revue de Kevin ; phase 3 en cours.
 
 ## Les documents font foi
 

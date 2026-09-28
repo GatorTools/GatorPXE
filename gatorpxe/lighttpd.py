@@ -15,11 +15,15 @@ from . import chemins
 UTILISATEUR = "www-data"
 
 
-def reglages(adresse: ipaddress.IPv4Interface, journal_acces: str, journal_erreurs: str) -> str:
+def reglages(adresse: ipaddress.IPv4Interface, dossier_images: str,
+             journal_acces: str, journal_erreurs: str) -> str:
+    """Le menu et CloneGator sous la racine ; le dossier d'images sous /images/."""
+    images = dossier_images.rstrip("/").replace("\\", "\\\\").replace('"', '\\"')
     return "\n".join([
         "# Généré par GatorPXE : ne pas modifier, il sera réécrit.",
-        'server.modules = ("mod_accesslog")',
+        'server.modules = ("mod_alias", "mod_accesslog")',
         f'server.document-root = "{chemins.HTTP}"',
+        f'alias.url = ("/images/" => "{images}/")',
         f'server.bind = "{adresse.ip}"',
         f"server.port = {chemins.PORT_HTTP}",
         f'server.username = "{UTILISATEUR}"',

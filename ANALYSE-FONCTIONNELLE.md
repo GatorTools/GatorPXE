@@ -13,6 +13,7 @@ seul.
 | 0.3 | 2026-09-28 | Kevin + Claude | iPXE BIOS pris dans les releases d'iPXE comme l'UEFI : le paquet `ipxe` n'est plus une dépendance (§10, §14, §15) |
 | 0.4 | 2026-09-28 | Claude | Essais de la phase 1 : réglages exacts du DHCP réglé à la main, condition nécessaire en BIOS seulement (§9, §16) |
 | 0.5 | 2026-09-28 | Kevin + Claude | CloneGator publie son démarrage réseau avec chaque release, shim de Debian compris ; GatorPXE le prend là (§7) |
+| 0.6 | 2026-09-28 | Claude | Essais des ISO en sanboot : l'ISO n'est pas chargée en mémoire, et les ISO Linux courantes ne retrouvent pas leur support (§6, §16) |
 
 ---
 
@@ -138,11 +139,21 @@ le retire du menu. Les fichiers non reconnus sont ignorés, et signalés dans l'
 |--------|-----------|-----------|
 | **WIM** (Windows PE, outils Windows) | par wimboot | très bonne, Secure Boot compris |
 | **ISO Windows** (installation, WinPE) | GatorPXE en extrait `boot.wim` et les fichiers de démarrage, une fois, puis wimboot | très bonne |
-| **ISO quelconque** (Linux, outils divers) | iPXE télécharge l'ISO entière en mémoire et la démarre (sanboot) | variable : beaucoup de Linux démarrent, d'autres cherchent leur propre fichier et échouent |
+| **ISO quelconque** (Linux, outils divers) | iPXE présente l'ISO au poste comme un disque, lu par morceaux à la demande (sanboot) | faible pour les Linux : le chargeur et le noyau démarrent, puis le système cherche son ISO et ne la trouve plus ; bonne pour les outils autonomes (netboot.xyz…) |
 | **EFI** (`.efi`) | chargé directement | bonne, s'il est signé quand Secure Boot est actif |
 
-Une ISO démarrée par sanboot occupe sa taille en mémoire vive du poste : une ISO de 6 Go ne
-démarre pas sur un poste de 4 Go.
+Le disque que présente iPXE n'existe que pour le micrologiciel : il disparaît dès que le système
+démarré prend la main. Une ISO dont le système se charge tout entier au démarrage marche ; une ISO
+qui relit ensuite son support échoue. Essais sur le réseau d'essai, BIOS et UEFI Secure Boot :
+
+| ISO | Résultat |
+|-----|----------|
+| netboot.xyz | démarre (BIOS ; en UEFI, son `.efi`) |
+| Debian 13 netinst | l'installeur démarre, puis ne trouve pas son support |
+| Ubuntu 24.04 Server | le noyau démarre, puis ne trouve pas son support |
+| Alpine 3.24 | le noyau démarre, puis ne trouve pas son support ; refusée par Secure Boot (chargeur non signé) |
+
+Un démarrage qui échoue ramène au menu, après un message.
 
 ## 7. CloneGator
 
@@ -287,6 +298,6 @@ fait revoir la section concernée.
 
 - Le renvoi vers WDS, en BIOS et en UEFI, avec Secure Boot actif.
 - ~~Le DHCP réglé à la main avec l'iPXE signé~~ : fait sur le réseau d'essai (§9).
-- Les ISO Linux courantes en sanboot : lesquelles démarrent.
+- ~~Les ISO Linux courantes en sanboot~~ : faites, résultats au §6.
 - L'extraction des ISO Windows récentes (Windows 11) et leur démarrage par wimboot.
 - Le proxy DHCP à côté des DHCP courants : Windows Server, pfSense, routeurs grand public.

@@ -14,6 +14,7 @@ TFTP = os.path.join(ETAT, "tftp")  # le petit chargeur iPXE, et rien d'autre
 HTTP = os.path.join(ETAT, "http")  # le menu ; les images viendront en phase 3
 IPXE = os.path.join(ETAT, "ipxe")  # les releases d'iPXE téléchargées
 CLONEGATOR = os.path.join(ETAT, "clonegator")  # le démarrage réseau de CloneGator (§7)
+WIMBOOT = os.path.join(ETAT, "wimboot")  # pour les images Windows (§6)
 REGLAGES = os.path.join(ETAT, "reglages")  # réglages générés de dnsmasq et lighttpd
 
 PORT_HTTP = 8069
