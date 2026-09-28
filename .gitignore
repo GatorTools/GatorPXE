@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+
+# Essais (hors du dépôt par défaut, mais au cas où)
+*.qcow2
+*.sha256
+
+# Paquets construits
+dist/

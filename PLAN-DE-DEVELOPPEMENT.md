@@ -7,6 +7,7 @@ Les renvois `§n` pointent vers l'analyse.
 |------|------|--------|------------|
 | 0.1 | 2026-09-28 | Kevin + Claude | Découpage initial en modules et en phases |
 | 0.2 | 2026-09-28 | Kevin + Claude | Le réseau de la station porte un WDS de production : tous les essais se font dans un réseau de VM isolé, sortie par NAT seulement ; recette sur un réseau physique séparé |
+| 0.3 | 2026-09-28 | Claude | Phase 0 faite, en attente de la revue de Kevin : réseau d'essai, socle, et la chaîne Secure Boot essayée à la main jusqu'au menu |
 
 ---
 
@@ -105,7 +106,7 @@ Deux séparations à tenir :
 Chaque phase se met au point sur le réseau d'essai (§1.2). Elle se termine par la revue de
 Kevin ; une release n'est publiée qu'à ce moment-là.
 
-### Phase 0 — Socle et réseau d'essai · taille S
+### Phase 0 — Socle et réseau d'essai · taille S · **faite, en attente de revue**
 
 - squelette du dépôt, version affichée et journalisée dès le premier jour (datée à la minute du
   commit, comme CloneGator)
@@ -115,6 +116,30 @@ Kevin ; une release n'est publiée qu'à ce moment-là.
 
 **Fini quand** : les trois postes QEMU reçoivent une adresse du DHCP « existant » et échouent
 proprement faute de serveur de démarrage.
+
+**Où on en est (2026-09-28).** `outils/reseau-essai.sh` monte et démonte le réseau d'essai
+(pont, DHCP « existant », sortie par NAT dans une table nftables à part), démarre des postes
+QEMU en BIOS, UEFI et UEFI Secure Boot, capture leur écran et leur envoie des touches. Un poste
+du pont atteint Internet et le partage d'essai. Le socle — `sysexec`, `journal`, `config`,
+`langue` — est repris de CloneGator ; `gatorpxe version` fonctionne, et `gatorpxe` sans root le
+dit en une phrase.
+
+**Le point le plus incertain de la phase 1 est levé**, par un dnsmasq en proxy monté à la main :
+le poste UEFI Secure Boot charge le shim signé, qui charge l'iPXE 2.0.0 signé depuis le même
+dossier TFTP ; l'iPXE reconnaît le proxy et atteint le script de menu. Les postes BIOS et UEFI
+aussi.
+
+Enseignements :
+
+- Les releases d'iPXE publient `ipxeboot.tar.gz` : shim et iPXE signés (`x86_64-sb/`), mais aussi
+  les chargeurs BIOS (`undionly.kpxe`). Le paquet `ipxe` des dépôts deviendrait alors inutile ;
+  à trancher en phase 1.
+- L'iPXE signé cherche `autoexec.ipxe` sur le serveur TFTP avant tout : c'est sans doute la
+  réponse à la boucle quand le DHCP est réglé à la main (§16).
+- En BIOS, la carte réseau de QEMU contient elle-même un iPXE : le poste saute l'étape TFTP.
+  Le chemin d'une vraie carte BIOS vers `undionly.kpxe` s'essaiera autrement en phase 1.
+- dnsmasq abandonne root : ses fichiers ne peuvent pas vivre sous `/root` ni dans un dossier
+  temporaire privé.
 
 ### Phase 1 — La chaîne de démarrage · taille L
 
