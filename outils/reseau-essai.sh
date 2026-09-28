@@ -1,7 +1,10 @@
 #!/bin/sh
 # Réseau d'essai isolé de GatorPXE (plan §1.2).
 #
-#   reseau-essai.sh monter          le pont, le DHCP « existant », la sortie par NAT
+#   reseau-essai.sh monter [manuel] le pont, le DHCP « existant », la sortie par NAT ;
+#                                   manuel : ce DHCP désigne lui-même les fichiers
+#                                   de démarrage, comme quand GatorPXE a son proxy
+#                                   coupé (§9)
 #   reseau-essai.sh demonter        tout retirer, postes compris
 #   reseau-essai.sh poste NOM MODE [IMAGE]
 #                                   démarrer un poste QEMU en démarrage réseau ;
@@ -31,6 +34,7 @@ mourir() { echo "reseau-essai : $*" >&2; exit 1; }
 [ "$(id -u)" = 0 ] || mourir "il faut root"
 
 monter() {
+    manuel=${1:-}
     mkdir -p "$ETAT"
     if ! ip link show "$PONT" >/dev/null 2>&1; then
         ip link add "$PONT" type bridge
@@ -48,8 +52,21 @@ monter() {
         ip -n "$NS" link set gpxe-dhcp1 up
         ip -n "$NS" link set lo up
     fi
-    if [ ! -f "$ETAT/dhcp.pid" ] || ! kill -0 "$(cat "$ETAT/dhcp.pid")" 2>/dev/null; then
-        ip netns exec "$NS" dnsmasq \
+    if [ -f "$ETAT/dhcp.pid" ]; then
+        kill "$(cat "$ETAT/dhcp.pid")" 2>/dev/null || true
+        sleep 1
+    fi
+    set --
+    if [ "$manuel" = manuel ]; then
+        # Les réglages que l'interface de GatorPXE demande de saisir (§9).
+        set -- --dhcp-match=set:efi,option:client-arch,7 \
+               --dhcp-match=set:efi,option:client-arch,9 \
+               --dhcp-boot=tag:!efi,undionly.kpxe,,"$RESEAU.1" \
+               --dhcp-boot=tag:efi,shimx64.efi,,"$RESEAU.1" \
+               --dhcp-userclass=set:ipxe,iPXE \
+               --dhcp-boot=tag:ipxe,"http://$RESEAU.1:8069/menu.ipxe"
+    fi
+    ip netns exec "$NS" dnsmasq "$@" \
             --conf-file=/dev/null --port=0 --interface=gpxe-dhcp1 --bind-interfaces \
             --dhcp-range="$RESEAU.100,$RESEAU.199,255.255.255.0,1h" \
             --dhcp-option=option:router,"$RESEAU.1" \
@@ -57,7 +74,6 @@ monter() {
             --dhcp-leasefile="$ETAT/dhcp.baux" \
             --log-dhcp --log-facility="$ETAT/dhcp.log" \
             --pid-file="$ETAT/dhcp.pid"
-    fi
 
     # Sortie par NAT : le pont vers le reste, et les réponses seulement en retour.
     sysctl -q net.ipv4.ip_forward=1
@@ -76,7 +92,7 @@ table inet $TABLE {
     }
 }
 FIN
-    echo "réseau d'essai monté : $PONT ($RESEAU.1), DHCP existant en $RESEAU.2"
+    echo "réseau d'essai monté : $PONT ($RESEAU.1), DHCP existant en $RESEAU.2${manuel:+ (réglé à la main)}"
 }
 
 demonter() {
@@ -172,11 +188,11 @@ arreter() {
 }
 
 case ${1:-} in
-    monter) monter ;;
+    monter) monter "${2:-}" ;;
     demonter) demonter ;;
     poste) [ $# -ge 3 ] || mourir "usage : poste NOM MODE [IMAGE]"; poste "$2" "$3" "${4:-}" ;;
     ecran) ecran "$2" ;;
     touches) shift; touches "$@" ;;
     arreter) arreter "$2" ;;
-    *) sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+    *) sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
 esac

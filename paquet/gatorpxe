@@ -1,0 +1,6 @@
+#!/bin/sh
+# Lance GatorPXE, installé dans /usr/lib/gatorpxe.
+export PYTHONPATH=/usr/lib/gatorpxe${PYTHONPATH:+:$PYTHONPATH}
+# Pas de __pycache__ dans /usr/lib : dpkg ne le connaîtrait pas.
+export PYTHONDONTWRITEBYTECODE=1
+exec /usr/bin/python3 -m gatorpxe "$@"

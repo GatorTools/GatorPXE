@@ -11,6 +11,7 @@ seul.
 | 0.1 | 2026-09-28 | Kevin + Claude | Première rédaction, à partir de la description du projet et des choix validés un à un : Python, service et outil de réglage séparés, interface texte, lighttpd, iPXE signé, proxy DHCP, formats d'images, renvois, emplacements |
 | 0.2 | 2026-09-28 | Kevin + Claude | Relecture : délai de 10 s sur le disque local confirmé (§5), 7zip retenu pour les ISO Windows (§14), §16 expliqué |
 | 0.3 | 2026-09-28 | Kevin + Claude | iPXE BIOS pris dans les releases d'iPXE comme l'UEFI : le paquet `ipxe` n'est plus une dépendance (§10, §14, §15) |
+| 0.4 | 2026-09-28 | Claude | Essais de la phase 1 : réglages exacts du DHCP réglé à la main, condition nécessaire en BIOS seulement (§9, §16) |
 
 ---
 
@@ -182,8 +183,13 @@ chaque poste le bon chargeur, BIOS ou UEFI, et reconnaît iPXE une fois chargé 
 menu plutôt que de le recharger en boucle. Rien à régler sur le DHCP existant.
 
 **Proxy DHCP coupé.** Pour un réseau où un proxy DHCP est interdit : l'interface affiche exactement
-les réglages à saisir dans le DHCP existant (Windows Server, pfSense, routeur…) — adresse du
-serveur, fichier BIOS, fichier UEFI, et la condition qui évite la boucle d'iPXE.
+les réglages à saisir dans le DHCP existant (Windows Server, pfSense, routeur…) :
+
+- l'adresse du serveur GatorPXE, et le fichier à charger : `shimx64.efi` en UEFI,
+  `undionly.kpxe` en BIOS ;
+- en BIOS seulement, la condition qui évite la boucle d'iPXE : si la classe utilisateur est
+  « iPXE », le fichier est l'adresse du menu (`http://…:8069/menu.ipxe`). En UEFI, l'iPXE signé
+  trouve le menu de lui-même.
 
 **Ports** : DHCP proxy (67 et 4011, UDP), TFTP (69, UDP), HTTP (8069, TCP). Le pare-feu du
 serveur, s'il y en a un, doit les laisser passer ; l'interface le vérifie et le dit.
@@ -280,7 +286,7 @@ confirmer. Chaque point deviendra une étape d'essai du plan de développement ;
 fait revoir la section concernée.
 
 - Le renvoi vers WDS, en BIOS et en UEFI, avec Secure Boot actif.
-- Le DHCP réglé à la main avec l'iPXE signé, qu'on ne peut pas modifier pour éviter la boucle.
+- ~~Le DHCP réglé à la main avec l'iPXE signé~~ : fait sur le réseau d'essai (§9).
 - Les ISO Linux courantes en sanboot : lesquelles démarrent.
 - L'extraction des ISO Windows récentes (Windows 11) et leur démarrage par wimboot.
 - Le proxy DHCP à côté des DHCP courants : Windows Server, pfSense, routeurs grand public.

@@ -1,0 +1,14 @@
+[Unit]
+Description=GatorPXE, serveur de démarrage réseau
+Documentation=https://github.com/GatorTools/GatorPXE
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/gatorpxe service
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

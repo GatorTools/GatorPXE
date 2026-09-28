@@ -1,6 +1,6 @@
 # GatorPXE — Plan de développement
 
-Compagnon de [ANALYSE-FONCTIONNELLE.md](ANALYSE-FONCTIONNELLE.md), révision 0.3.
+Compagnon de [ANALYSE-FONCTIONNELLE.md](ANALYSE-FONCTIONNELLE.md), révision 0.4.
 Les renvois `§n` pointent vers l'analyse.
 
 | Rév. | Date | Auteur | Changement |
@@ -9,6 +9,7 @@ Les renvois `§n` pointent vers l'analyse.
 | 0.2 | 2026-09-28 | Kevin + Claude | Le réseau de la station porte un WDS de production : tous les essais se font dans un réseau de VM isolé, sortie par NAT seulement ; recette sur un réseau physique séparé |
 | 0.3 | 2026-09-28 | Claude | Phase 0 faite, en attente de la revue de Kevin : réseau d'essai, socle, et la chaîne Secure Boot essayée à la main jusqu'au menu |
 | 0.4 | 2026-09-28 | Kevin + Claude | Analyse 0.3 : iPXE BIOS pris dans les releases d'iPXE ; wimboot passe en phase 3, où il sert. Phase 1 commencée |
+| 0.5 | 2026-09-28 | Claude | Phase 1 faite, en attente de la revue de Kevin. Analyse 0.4 |
 
 ---
 
@@ -142,7 +143,7 @@ Enseignements :
 - dnsmasq abandonne root : ses fichiers ne peuvent pas vivre sous `/root` ni dans un dossier
   temporaire privé.
 
-### Phase 1 — La chaîne de démarrage · taille L
+### Phase 1 — La chaîne de démarrage · taille L · **faite, en attente de revue**
 
 - `telechargements` : iPXE depuis ses releases — shim et iPXE signés pour l'UEFI, `undionly.kpxe`
   pour le BIOS
@@ -157,6 +158,34 @@ Enseignements :
 
 **Fini quand** : les trois postes QEMU, Secure Boot compris, affichent le menu et repartent sur
 leur disque local ; aucune boucle d'iPXE, proxy actif comme DHCP réglé à la main.
+
+**Où on en est (2026-09-28).** `gatorpxe service`, lancé par l'unité systemd (surcharge de
+développement sur la station, jamais activée au démarrage), obtient iPXE v2.0.0, prépare les
+chargeurs et le menu, lance dnsmasq et lighttpd sur la seule carte réglée, et les relance s'ils
+s'arrêtent. Sur le réseau d'essai :
+
+- proxy actif : les postes BIOS, UEFI et UEFI Secure Boot affichent le menu, puis démarrent au
+  bout de 10 s sur leur disque local — le live de CloneGator, branché comme disque ;
+- proxy coupé, DHCP « existant » réglé à la main : même résultat, sans boucle (analyse §9) ;
+- carte réglée disparue : les instances s'arrêtent, le service attend et ne se rabat sur aucune
+  autre carte ; la carte revenue, il repart seul.
+
+Chaque démarrage de poste est au journal, brut : `dnsmasq.log` (adresse MAC, BIOS ou UEFI,
+fichiers envoyés) et `http-acces.log` (adresse, fichiers demandés). La vue « derniers postes »
+de l'accueil les rassemblera en phase 5.
+
+Enseignements :
+
+- En UEFI, « Démarrer sur le disque local » sort d'iPXE par `exit 1` : sur une sortie réussie,
+  le micrologiciel EDK2 s'arrête et ouvre son menu au lieu de passer au disque.
+- L'iPXE signé trouve `autoexec.ipxe` avant tout échange DHCP : en UEFI, le DHCP réglé à la main
+  n'a besoin d'aucune condition. `undionly.kpxe` ne le cherche pas : en BIOS, sans la condition
+  « classe utilisateur iPXE », il boucle.
+- Reste à voir sur une vraie carte BIOS (recette) : le passage de sa ROM PXE à
+  `undionly.kpxe`. Dans QEMU, la ROM de la carte est déjà un iPXE ; `undionly.kpxe` s'y charge
+  et s'exécute, mais le premier maillon n'est pas celui d'un vrai poste.
+- dnsmasq et lighttpd abandonnent root : lighttpd avant d'ouvrir ses journaux, que le service
+  crée donc d'avance à son nom.
 
 ### Phase 2 — CloneGator au menu · taille M
 
