@@ -5,7 +5,8 @@ Un serveur de démarrage réseau (PXE) simple, de la famille
 Debian ou Ubuntu, on le démarre, et les ordinateurs du réseau peuvent démarrer
 dessus.
 
-**État : description du projet, rien n'est codé.** Ce document rassemble
+**État : rien n'est codé.** L'[analyse fonctionnelle](ANALYSE-FONCTIONNELLE.md) décrit
+le projet en détail et fait foi ; ce qui suit en est le résumé d'origine. Ce document rassemble
 l'idée telle que Kevin l'a exposée le 2026-09-28, et ce qui en a été décidé
 depuis. Les choix techniques sont des
 pistes, à trancher un point à la fois avant d'écrire une analyse et un plan.
