@@ -52,6 +52,47 @@ class Resultat:
         return f"{self.commande} -> {etat}"
 
 
+class Programme:
+    """Un programme qui tourne en permanence : dnsmasq, lighttpd.
+
+    Le service le lance, vérifie qu'il vit encore, et l'arrête. Ses sorties vont
+    dans un fichier du journal : un tube non lu finirait par le figer.
+    """
+
+    def __init__(self, argv: list[str], sorties: str):
+        self.argv = list(argv)
+        self.sorties = sorties
+        with open(sorties, "ab") as fichier:
+            self._popen = subprocess.Popen(
+                self.argv, stdin=subprocess.DEVNULL, stdout=fichier, stderr=fichier,
+            )
+        _log.info("lancé (pid %d) : %s", self._popen.pid, self.commande)
+
+    @property
+    def commande(self) -> str:
+        return " ".join(self.argv)
+
+    def vivant(self) -> bool:
+        return self._popen.poll() is None
+
+    @property
+    def code(self) -> int | None:
+        return self._popen.poll()
+
+    def arreter(self, delai: float = 5.0) -> None:
+        """SIGTERM, puis SIGKILL s'il ne s'arrête pas dans le délai."""
+        if self._popen.poll() is not None:
+            return
+        self._popen.terminate()
+        try:
+            self._popen.wait(timeout=delai)
+        except subprocess.TimeoutExpired:
+            _log.warning("tué : %s", self.commande)
+            self._popen.kill()
+            self._popen.wait(timeout=delai)
+        _log.info("arrêté : %s", self.commande)
+
+
 def disponible(programme: str) -> bool:
     """Le programme est-il installé ?"""
     return shutil.which(programme) is not None
@@ -63,12 +104,16 @@ def executer(
     entree: str | None = None,
     dossier: str | None = None,
     echec_prevu: bool = False,
+    discret: bool = False,
 ) -> Resultat:
     """Lance une commande et rapporte ce qu'elle a fait.
 
     Ne lève jamais d'exception sur un code de retour non nul : c'est à
     l'appelant de décider si l'échec est grave. Un dépassement de délai tue le
     processus et revient avec `expire=True`.
+
+    `discret` : une commande relancée à chaque tour du service n'est journalisée
+    que si elle échoue.
     """
     debut = time.monotonic()
     try:
@@ -112,7 +157,8 @@ def executer(
     )
 
     if resultat.ok:
-        _log.debug("%s", resultat)
+        if not discret:
+            _log.debug("%s", resultat)
     elif echec_prevu:
         # Un échec qui fait partie du fonctionnement normal : au journal, sans alerte.
         _log.info("%s | %s", resultat, resultat.erreur.strip()[:200])

@@ -3,8 +3,11 @@
 #
 #   reseau-essai.sh monter          le pont, le DHCP « existant », la sortie par NAT
 #   reseau-essai.sh demonter        tout retirer, postes compris
-#   reseau-essai.sh poste NOM MODE  démarrer un poste QEMU en démarrage réseau ;
-#                                   MODE : bios, uefi ou sb (UEFI Secure Boot)
+#   reseau-essai.sh poste NOM MODE [IMAGE]
+#                                   démarrer un poste QEMU en démarrage réseau ;
+#                                   MODE : bios, uefi ou sb (UEFI Secure Boot) ;
+#                                   IMAGE : son disque local, jamais modifié
+#                                   (une ISO hybride démarrable, par exemple)
 #   reseau-essai.sh ecran NOM       capture d'écran du poste (PNG)
 #   reseau-essai.sh touches NOM T…  envoyer des touches au poste (noms QEMU : ret, down…)
 #   reseau-essai.sh arreter NOM     arrêter un poste
@@ -95,7 +98,7 @@ demonter() {
 }
 
 poste() {
-    nom=$1 mode=$2
+    nom=$1 mode=$2 image=${3:-}
     ip link show "$PONT" >/dev/null 2>&1 || mourir "réseau non monté"
     tap="gpxe-t-$nom"
     [ ${#tap} -le 15 ] || mourir "nom trop long : $nom"
@@ -104,8 +107,13 @@ poste() {
 
     # Adresse MAC stable par nom de poste, pour reconnaître les postes au journal.
     mac=$(printf '%s' "$nom" | md5sum | sed 's/^\(..\)\(..\)\(..\).*/52:54:00:\1:\2:\3/')
-    disque="$ETAT/poste-$nom.qcow2"
-    [ -f "$disque" ] || qemu-img create -q -f qcow2 "$disque" 8G
+    if [ -n "$image" ]; then
+        [ -f "$image" ] || mourir "image introuvable : $image"
+        disque="file=$image,format=raw,snapshot=on"
+    else
+        [ -f "$ETAT/poste-$nom.qcow2" ] || qemu-img create -q -f qcow2 "$ETAT/poste-$nom.qcow2" 8G
+        disque="file=$ETAT/poste-$nom.qcow2,format=qcow2"
+    fi
 
     case $mode in
         bios)
@@ -126,7 +134,7 @@ poste() {
     qemu-system-x86_64 $micro -m 2048 -smp 2 \
         -netdev tap,id=n0,ifname="$tap",script=no,downscript=no \
         -device virtio-net-pci,netdev=n0,mac="$mac",bootindex=1 \
-        -drive file="$disque",if=virtio,format=qcow2 \
+        -drive "$disque",if=none,id=d0 -device virtio-blk-pci,drive=d0,bootindex=2 \
         -display none -vga std \
         -serial file:"$ETAT/poste-$nom.console" \
         -monitor unix:"$ETAT/poste-$nom.moniteur",server,nowait \
@@ -166,9 +174,9 @@ arreter() {
 case ${1:-} in
     monter) monter ;;
     demonter) demonter ;;
-    poste) [ $# = 3 ] || mourir "usage : poste NOM MODE"; poste "$2" "$3" ;;
+    poste) [ $# -ge 3 ] || mourir "usage : poste NOM MODE [IMAGE]"; poste "$2" "$3" "${4:-}" ;;
     ecran) ecran "$2" ;;
     touches) shift; touches "$@" ;;
     arreter) arreter "$2" ;;
-    *) sed -n '2,12p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+    *) sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
 esac

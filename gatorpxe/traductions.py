@@ -8,4 +8,7 @@ ici, avec les mêmes champs.
 ANGLAIS: dict[str, str] = {
     # ------------------------------------------------------------- lancement
     "GatorPXE doit être lancé en root :  sudo gatorpxe": "GatorPXE must be run as root:  sudo gatorpxe",
+
+    # -------------------------------------------------- menu de démarrage (§5)
+    "Démarrer sur le disque local": "Boot from local disk",
 }
