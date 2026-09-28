@@ -9,6 +9,7 @@ seul.
 | Rév. | Date | Auteur | Changement |
 |------|------|--------|------------|
 | 0.1 | 2026-09-28 | Kevin + Claude | Première rédaction, à partir de la description du projet et des choix validés un à un : Python, service et outil de réglage séparés, interface texte, lighttpd, iPXE signé, proxy DHCP, formats d'images, renvois, emplacements |
+| 0.2 | 2026-09-28 | Kevin + Claude | Relecture : délai de 10 s sur le disque local confirmé (§5), 7zip retenu pour les ISO Windows (§14), §16 expliqué |
 
 ---
 
@@ -120,8 +121,7 @@ Un poste qui démarre sur GatorPXE voit un menu, dans cet ordre :
 Chaque image porte son nom de fichier nettoyé, suivi de son type entre parenthèses :
 `ubuntu-24.04-desktop.iso` devient « ubuntu 24.04 desktop (ISO) ».
 
-**Proposé par défaut, à confirmer :** sans choix de l'opérateur, le menu démarre au bout de
-10 secondes sur **le disque local**. Un poste qui démarre par le réseau par erreur, ou dont on a
+Sans choix de l'opérateur, le menu démarre au bout de 10 secondes sur **le disque local**. Un poste qui démarre par le réseau par erreur, ou dont on a
 oublié de changer l'ordre de démarrage, retrouve ainsi son système au lieu de lancer un outil.
 Délai et entrée par défaut se changent dans l'interface.
 
@@ -254,8 +254,8 @@ sudo apt install gatorpxe
 ```
 
 - dépendances : `python3`, `dnsmasq-base` (le programme seul, sans le service système),
-  `lighttpd`, `ipxe`, `7zip` (pour extraire les fichiers d'une ISO Windows, au format UDF — à
-  confirmer en essai) ;
+  `lighttpd`, `ipxe`, `7zip` (pour extraire les fichiers d'une ISO Windows : elles sont au format
+  UDF, que 7zip lit sans monter l'image) ;
 - à l'installation : le service démarre, proxy DHCP actif ; si lighttpd n'était pas installé avant,
   son serveur web par défaut (port 80) est désactivé, jamais s'il l'était déjà (P3) ;
 - à la désinstallation : le service s'arrête ; les images et les réglages restent.
@@ -273,6 +273,10 @@ Les mêmes que CloneGator :
   commentaires, les commits et les documents sont en français.
 
 ## 16. À vérifier par des essais
+
+Ce que l'analyse promet mais que seul un essai sur de vrais postes et de vrais réseaux peut
+confirmer. Chaque point deviendra une étape d'essai du plan de développement ; un essai qui échoue
+fait revoir la section concernée.
 
 - Le renvoi vers WDS, en BIOS et en UEFI, avec Secure Boot actif.
 - Le DHCP réglé à la main avec l'iPXE signé, qu'on ne peut pas modifier pour éviter la boucle.
