@@ -6,7 +6,8 @@ Debian ou Ubuntu, on le démarre, et les ordinateurs du réseau peuvent démarre
 dessus.
 
 **État : description du projet, rien n'est codé.** Ce document rassemble
-l'idée telle que Kevin l'a exposée le 2026-09-28. Les choix techniques sont des
+l'idée telle que Kevin l'a exposée le 2026-09-28, et ce qui en a été décidé
+depuis. Les choix techniques sont des
 pistes, à trancher un point à la fois avant d'écrire une analyse et un plan.
 
 ## L'idée
@@ -34,12 +35,22 @@ Des entrées de menu qui redirigent le poste vers un autre serveur : par
 exemple le serveur WDS d'une entreprise, ou un autre serveur PXE. Ajouter une
 entrée doit être simple : choisir le type de serveur, donner son adresse.
 
-### 3. Des sauvegardes CloneGator
+### 3. CloneGator
 
-Un dossier qui contient des sauvegardes au format CloneGator. Le poste choisit
-une sauvegarde dans le menu, puis, sur l'écran suivant, le disque local où la
-restaurer ; la restauration se fait ensuite toute seule. GatorPXE devient ainsi
-un serveur de restauration d'images CloneGator.
+CloneGator, le logiciel de clonage et de sauvegarde de GatorTools, figure au
+menu par défaut ; on peut l'en retirer dans les réglages. Il ne passe pas par
+son ISO : GatorPXE sert directement les fichiers de démarrage réseau de son
+live (noyau, initrd, système compressé), plus légers et plus sûrs à démarrer
+qu'une ISO, et les tient à jour avec les releases de CloneGator.
+
+Restaurer une sauvegarde passe par CloneGator lui-même : le poste démarre
+CloneGator, puis Restaurer, le partage réseau où sont les sauvegardes, la
+sauvegarde, le disque. GatorPXE ne lit pas les sauvegardes et n'a pas à
+connaître leur format.
+
+**Plus tard, en option** : GatorPXE transmettrait à CloneGator l'adresse du
+partage de sauvegardes, pour qu'elle soit déjà remplie au démarrage ; seul le
+mot de passe resterait à taper.
 
 ## Questions ouvertes
 
@@ -51,11 +62,6 @@ un serveur de restauration d'images CloneGator.
   essayées famille par famille.
 - **Types de serveurs** vers lesquels renvoyer (WDS, iPXE, PXE générique), et
   les particularités de chacun.
-- **La restauration des sauvegardes CloneGator** : le poste démarre le
-  CloneGator live par le réseau, qui doit alors ouvrir directement la
-  sauvegarde choisie et ne demander que le disque cible. Où vit ce choix, et
-  comment le live lit la sauvegarde (HTTP, partage réseau) ? Il faudra ajouter
-  ce mode à CloneGator.
 - **L'interface** : en mode texte, comme CloneGator, ou autre.
 - **BIOS et UEFI** demandent deux chargeurs réseau différents ; **Secure Boot**
   refuse iPXE sans disposition particulière.
@@ -70,6 +76,6 @@ un serveur de restauration d'images CloneGator.
 - **dnsmasq** pour le TFTP et le proxy DHCP.
 - Le **CloneGator live** démarre par le réseau : sa construction produit déjà
   le noyau, l'initrd et le système compressé nécessaires ; il restera à les
-  joindre aux releases de CloneGator.
+  joindre aux releases de CloneGator, où GatorPXE ira les chercher.
 - Comme pour CloneGator : rien à installer hors des dépôts de Debian et
   d'Ubuntu.
