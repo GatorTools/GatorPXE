@@ -17,7 +17,7 @@ class Analyse(unittest.TestCase):
     def test_options_66_et_67(self):
         options = bytes([66, 14]) + b"192.168.89.130" + bytes([67, 20]) + b"boot\\x64\\wdsmgfw.efi"
         xid, demarrage = detection.analyser(reponse(options=options))
-        self.assertEqual(xid, "01020304")
+        self.assertEqual(xid, b"\x01\x02\x03\x04")
         self.assertEqual(demarrage, detection.Demarrage("192.168.89.130", "boot\\x64\\wdsmgfw.efi"))
 
     def test_champs_bootp_a_defaut(self):
@@ -30,6 +30,10 @@ class Analyse(unittest.TestCase):
     def test_next_server_seul_n_annonce_rien(self):
         # dnsmasq, entre autres, met toujours sa propre adresse dans « next-server ».
         self.assertIsNone(detection.analyser(reponse(siaddr="10.0.0.2"))[1])
+
+    def test_lecture_des_options_avec_bourrage(self):
+        options = bytes([0, 0, 66, 3]) + b"abc" + bytes([0, 67, 1]) + b"x" + b"\xff" + bytes([66, 1]) + b"z"
+        self.assertEqual(detection.lire_options(options), {66: b"abc", 67: b"x"})
 
     def test_paquet_inform(self):
         paquet = detection.paquet_inform("10.0.0.9", bytes.fromhex("525400aabbcc"), b"\x09\x09\x09\x09")

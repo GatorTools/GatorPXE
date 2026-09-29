@@ -370,7 +370,10 @@ Enseignements :
 - Détection des options 66 et 67 : un serveur DHCP répond au DHCPINFORM au port d'origine
   (dnsmasq) ou au port 68 (celui de l'école), que le client DHCP de la machine occupe déjà. La
   réponse est donc lue sur la carte par une socket brute ; liée à un pont, elle ne reçoit rien :
-  elle écoute toutes les cartes et filtre par nom.
+  elle écoute toutes les cartes et filtre par nom. Relecture demandée par Kevin : un filtre BPF
+  posé dans le noyau (celui de `tcpdump 'udp src port 67'`) ne laisse passer que les réponses de
+  serveurs DHCP — sans lui, sur un serveur chargé, Python aurait trié des milliers de trames et
+  pu manquer la réponse ; une erreur réseau est rattrapée et journalisée.
 - Lancé depuis le dossier du dépôt, `python3 -m gatorpxe` prenait le code du dossier courant
   plutôt que celui installé : le lanceur passe `-P` (Python 3.11 ou plus). CloneGator a le même
   lanceur.
