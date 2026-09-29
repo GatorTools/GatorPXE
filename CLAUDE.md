@@ -6,7 +6,7 @@ tout seul — CloneGator, des images démarrables déposées dans un dossier, de
 renvois vers d'autres serveurs (WDS…).
 
 **État : phase 5 faite.** Analyse fonctionnelle (révision 0.9) et plan de
-développement (révision 0.11) ; phases 1, 2 et 5 faites, en attente de la revue de Kevin ; phases 3 et 4 en cours (ISO d.installation de Windows 11 et WDS restent).
+développement (révision 0.11) ; phases 1, 2 et 5 faites, en attente de la revue de Kevin ; phases 3 et 4 en cours (ISO d'installation de Windows 11 et WDS restent).
 
 ## Les documents font foi
 
