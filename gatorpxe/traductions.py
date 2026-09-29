@@ -122,11 +122,16 @@ ANGLAIS: dict[str, str] = {
     "si la classe utilisateur (option 77) vaut « iPXE », le fichier devient":
         "when the user class (option 77) is \"iPXE\", the file becomes",
     "En UEFI, rien de plus : iPXE trouve le menu de lui-même.": "For UEFI, nothing more: iPXE finds the menu by itself.",
-    "Ce serveur tient son adresse du DHCP : si elle change, ces réglages ne mèneront plus ici.":
-        "This server gets its address from DHCP: if it changes, these settings will no longer lead here.",
-    "Réservez-la dans votre DHCP, ou fixez-la.": "Reserve it in your DHCP, or make it static.",
-    "À saisir dans votre DHCP (Windows Server, routeur…) si le proxy DHCP est coupé.":
-        "To enter in your DHCP (Windows Server, router…) when the proxy DHCP is off.",
+    "Le proxy DHCP est actif : rien à régler dans votre service DHCP.":
+        "The proxy DHCP is on: nothing to set in your DHCP service.",
+    "Si vous le désactivez, configurez-le ainsi (options 66 et 67) :":
+        "If you turn it off, configure it as follows (options 66 and 67):",
+    "Le proxy DHCP est désactivé. Si ce n'est pas déjà fait, configurez votre service DHCP (options 66 et 67) :":
+        "The proxy DHCP is off. If not already done, configure your DHCP service (options 66 and 67):",
+    "Cette machine reçoit son adresse de votre service DHCP, et le proxy DHCP est désactivé :":
+        "This machine gets its address from your DHCP service, and the proxy DHCP is off:",
+    "si ce n'est pas déjà fait, réservez cette adresse dans votre service DHCP, ou donnez-lui une adresse fixe.":
+        "if not already done, reserve this address in your DHCP service, or give it a static address.",
     "Dossier": "Folder",
     "Déposer une image ici suffit : elle paraît au menu. Un sous-dossier donne un sous-menu.":
         "Dropping an image here is enough: it shows in the menu. A subfolder gives a submenu.",

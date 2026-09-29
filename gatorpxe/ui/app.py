@@ -354,12 +354,21 @@ class Application:
                 Ligne.de(f"  http://{serveur}:{PORT_HTTP}/menu.ipxe", FORT),
                 Ligne.de(t("En UEFI, rien de plus : iPXE trouve le menu de lui-même."), DETAIL),
             ]
-            entete = [Ligne.de(t("À saisir dans votre DHCP (Windows Server, routeur…) si le proxy DHCP est coupé."), DETAIL)]
-            if vu.get("adresse_dynamique"):
-                # Une réservation DHCP ne se voit pas d'ici : le texte reste nuancé.
-                entete.append(Ligne.de(t("Ce serveur tient son adresse du DHCP : si elle change, ces réglages ne "
-                                         "mèneront plus ici."), AVERTISSEMENT))
-                entete.append(Ligne.de(t("Réservez-la dans votre DHCP, ou fixez-la."), AVERTISSEMENT))
+            if self.reglages.proxy_dhcp:
+                entete = [Ligne.de(t("Le proxy DHCP est actif : rien à régler dans votre service DHCP."), NORMAL),
+                          Ligne.de(t("Si vous le désactivez, configurez-le ainsi (options 66 et 67) :"), NORMAL)]
+            else:
+                entete = [Ligne.de(t("Le proxy DHCP est désactivé. Si ce n'est pas déjà fait, configurez votre "
+                                     "service DHCP (options 66 et 67) :"), FORT)]
+                if vu.get("adresse_dynamique"):
+                    # Une réservation DHCP ne se voit pas d'ici : « si ce n'est pas déjà fait ».
+                    lignes += [
+                        Ligne.de(""),
+                        Ligne.de(t("Cette machine reçoit son adresse de votre service DHCP, et le proxy DHCP est "
+                                   "désactivé :"), AVERTISSEMENT),
+                        Ligne.de(t("si ce n'est pas déjà fait, réservez cette adresse dans votre service DHCP, "
+                                   "ou donnez-lui une adresse fixe."), AVERTISSEMENT),
+                    ]
             return self._page(t("Réglages pour votre DHCP"), entete, _touches_lire()), lignes
         self.ecran.afficher(construire)
 
