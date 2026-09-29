@@ -21,7 +21,7 @@ seul.
 | 0.11 | 2026-09-29 | Kevin + Claude | Renvoi WDS en UEFI : limite d'iPXE 2.0.0, en attente de son correctif (§8) |
 | 0.12 | 2026-09-29 | Kevin + Claude | Renvoi WDS marqué « pas en UEFI pour l'instant » au menu des postes UEFI, tant qu'iPXE 2.0.0 est en service (§8) |
 | 0.13 | 2026-09-29 | Kevin + Claude | Adresse dynamique : sans conséquence en proxy DHCP ; proxy coupé, l'écran des réglages DHCP avertit si l'adresse vient du DHCP (§9) |
-| 0.14 | 2026-09-29 | Kevin + Claude | Détection de ce que le DHCP en place annonce aux postes PXE, sans changement d'office ; écran des réglages DHCP réécrit (§9) |
+| 0.14 | 2026-09-29 | Kevin + Claude | Détection de ce que le service DHCP du réseau annonce aux postes PXE, sans changement d'office ; écran des réglages DHCP réécrit (§9) |
 
 ---
 
@@ -248,15 +248,15 @@ Ces réglages désignent le serveur par son adresse : elle doit rester la même.
 son adresse du DHCP, l'écran le signale et propose de la réserver ou de la fixer ; une réservation
 DHCP ne se distingue pas d'un bail ordinaire vue du serveur, d'où ce ton de simple rappel.
 
-**Ce que dit déjà le DHCP en place.** Au démarrage du service, à chaque changement de réglages,
-puis une fois par heure, GatorPXE demande au service DHCP déjà en place, par un DHCPINFORM qui ne
-prend aucun bail, ce qu'il annonce aux postes PXE (options 66 et 67). L'écran des réglages DHCP le
-dit : s'il désigne déjà ce serveur, le proxy DHCP n'est pas nécessaire et peut être désactivé ;
-s'il désigne un autre serveur, les postes risquent de démarrer sur lui, et un renvoi vers ce
-serveur le garde accessible — un « ! » à l'accueil y mène. Rien n'est changé d'office : laissé
-actif, le proxy est sans effet dans le premier cas, et c'est lui qui rend GatorPXE joignable dans
-le second. Une réponse sans ces options ne prouve rien : certains serveurs ne les donnent qu'à
-certains postes.
+**Ce que dit déjà le service DHCP du réseau.** Au démarrage du service, à chaque changement de
+réglages, puis une fois par heure, GatorPXE demande au service DHCP du réseau, par un DHCPINFORM
+qui ne prend aucun bail, ce qu'il annonce aux postes PXE (options 66 et 67). L'écran des réglages
+DHCP donne d'abord l'état du proxy, puis, en dessous, ce qu'il a trouvé : si le service DHCP du
+réseau désigne ce serveur, le proxy DHCP n'est pas nécessaire et peut être désactivé ; s'il désigne
+un autre serveur PXE, un message invite à corriger les configurations du service DHCP du réseau, et
+un « ! » à l'accueil y mène. Rien n'est changé d'office : laissé actif, le proxy est sans effet dans
+le premier cas, et c'est lui qui rend GatorPXE joignable dans le second. Une réponse sans ces
+options ne prouve rien : certains serveurs ne les donnent qu'à certains postes.
 
 **Ports** : DHCP proxy (67 et 4011, UDP), TFTP (69, UDP), HTTP (8069, TCP). Le pare-feu du
 serveur, s'il y en a un, doit les laisser passer ; l'interface le vérifie et le dit.
