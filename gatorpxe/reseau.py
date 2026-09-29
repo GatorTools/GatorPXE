@@ -54,6 +54,15 @@ def adresse(carte: str) -> ipaddress.IPv4Interface | None:
         return None
 
 
+def mac(carte: str) -> bytes | None:
+    """L'adresse matérielle de la carte."""
+    texte = sysexec.lire(f"/sys/class/net/{carte}/address")
+    try:
+        return bytes.fromhex(texte.replace(":", "")) if texte else None
+    except ValueError:
+        return None
+
+
 def adresse_dynamique(carte: str) -> bool:
     """L'adresse vient-elle du DHCP ? Une réservation DHCP ne se distingue pas
     d'un bail ordinaire : elle aussi est « dynamique » pour la machine."""

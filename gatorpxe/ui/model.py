@@ -65,6 +65,7 @@ class Element:
     actif: bool = True
     motif: str = ""
     detail: str = ""  # ajouté en second plan, après le libellé
+    alerte: bool = False  # un « ! » devant le libellé : il y a quelque chose à voir
 
 
 @dataclass
@@ -132,7 +133,8 @@ class Liste:
             numero = str(i + 1) if i < 9 else " "
             style = FORT if element.actif else GRISE
             libelle = element.libelle.ljust(largeur) if element.detail or element.motif else element.libelle
-            ligne = Ligne([(f" {marque} {numero}  {libelle}", style)])
+            ligne = Ligne([(f" {marque} {numero}  ", style), ("! " if element.alerte else "  ", AVERTISSEMENT),
+                           (f"{libelle}", style)])
             if element.motif:
                 ligne.morceaux.append((f"   {CROIX} {element.motif}",
                                        AVERTISSEMENT if element.actif else GRISE))

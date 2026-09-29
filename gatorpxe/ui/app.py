@@ -133,7 +133,8 @@ class Application:
             liste = Liste("", [
                 Element(t("Menu de démarrage"), "menu", detail=t("Ce que voient les postes, et les fichiers écartés")),
                 Element(t("Derniers postes"), "postes", detail=t("Qui a démarré, quand, sur quoi")),
-                Element(t("Réseau et DHCP"), "reseau", detail=t("Proxy DHCP, carte réseau")),
+                Element(t("Réseau et DHCP"), "reseau", detail=t("Proxy DHCP, carte réseau"),
+                        alerte=autre_serveur(etat.lire())),
                 Element(t("Dossier des images"), "dossier", detail=self.reglages.dossier_images),
                 Element("CloneGator", "clonegator",
                         detail=t("Au menu") if self.reglages.clonegator else t("Retiré du menu")),
@@ -298,7 +299,7 @@ class Application:
                     Element(t("Carte réseau"), "carte", detail=carte),
                     Element(t("Réglages pour votre DHCP"), "dhcp",
                             detail=t("Rien à configurer") if self.reglages.proxy_dhcp
-                            else t("Options 66 et 67 à configurer")),
+                            else t("Options 66 et 67 à configurer"), alerte=autre_serveur(etat.lire())),
                 ]
             choix = self._choisir(t("Réseau et DHCP"), elements, t(
                 "Le proxy DHCP ne répond qu'aux postes qui démarrent par le réseau."))
@@ -355,9 +356,10 @@ class Application:
                 Ligne.de(f"  http://{serveur}:{PORT_HTTP}/menu.ipxe", FORT),
                 Ligne.de(t("En UEFI, rien de plus : iPXE trouve le menu de lui-même."), DETAIL),
             ]
+            annonce = lignes_annonce(vu, self.reglages.proxy_dhcp)
             if self.reglages.proxy_dhcp:
                 # Proxy actif : ce que ça implique, et rien à configurer.
-                lignes = [
+                lignes = annonce + [
                     Ligne.de(t("Le proxy DHCP est activé : vous n'avez rien à configurer dans le service DHCP "
                                "déjà en place."), FORT),
                     Ligne.de(""),
@@ -368,6 +370,7 @@ class Application:
                 return self._page(t("Réglages pour votre DHCP"), [], _touches_lire()), lignes
             entete = [Ligne.de(t("Le proxy DHCP est désactivé. Si ce n'est pas déjà fait, configurez le service "
                                  "DHCP déjà en place (options 66 et 67) :"), FORT)]
+            entete = annonce + entete
             if vu.get("adresse_dynamique"):
                 # Une réservation DHCP ne se voit pas d'ici : « si ce n'est pas déjà fait ».
                 lignes += [
@@ -573,6 +576,34 @@ def verifier_renvoi(type_: str, valeurs: dict[str, str]) -> str:
     if type_ == config.PXE and not (valeurs.get("fichier_bios") or valeurs.get("fichier_uefi")):
         return t("Donnez au moins un fichier, BIOS ou UEFI.")
     return ""
+
+
+def autre_serveur(vu: dict | None) -> bool:
+    """Le service DHCP déjà en place désigne-t-il un autre serveur de démarrage ?"""
+    annonce = (vu or {}).get("dhcp_demarrage")
+    return bool(annonce and not annonce.get("ce_serveur"))
+
+
+def lignes_annonce(vu: dict, proxy: bool) -> list[Ligne]:
+    """Ce que le service DHCP déjà en place annonce aux postes PXE, en tête de
+    l'écran des réglages DHCP ; rien s'il n'annonce rien."""
+    annonce = vu.get("dhcp_demarrage")
+    if not annonce:
+        return []
+    if annonce.get("ce_serveur") and proxy:
+        return [Ligne.de(t("Le service DHCP déjà en place désigne déjà ce serveur (options 66 et 67) :"), OK),
+                Ligne.de(t("le proxy DHCP de GatorPXE n'est pas nécessaire. Vous pouvez le désactiver."), OK),
+                Ligne.de("")]
+    if annonce.get("ce_serveur"):
+        return [Ligne.de(t("Le service DHCP déjà en place désigne bien ce serveur (options 66 et 67)."), OK),
+                Ligne.de("")]
+    return [Ligne([("! ", AVERTISSEMENT), (t("Le service DHCP déjà en place désigne un autre serveur de démarrage "
+                                                "(option 66 : {serveur}).", serveur=annonce.get("serveur")),
+                                              AVERTISSEMENT)]),
+            Ligne.de("  " + t("Les postes risquent de démarrer sur lui plutôt que sur GatorPXE."), AVERTISSEMENT),
+            Ligne.de("  " + t("Pour le garder accessible, ajoutez un renvoi vers ce serveur (Renvois)."),
+                     AVERTISSEMENT),
+            Ligne.de("")]
 
 
 def service_actif() -> bool:

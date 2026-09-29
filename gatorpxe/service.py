@@ -12,16 +12,18 @@ import logging
 import os
 import shutil
 import signal
+import socket
 import threading
 import time
 from typing import Callable
 
-from . import (VERSION, chemins, config, dnsmasq, etat, examen, images, journal, langue, lighttpd, menu, reseau,
+from . import (VERSION, chemins, config, detection, dnsmasq, etat, examen, images, journal, langue, lighttpd, menu, reseau,
                sysexec, telechargements, windows)
 
 _log = logging.getLogger("gatorpxe.service")
 
 TOUR = 5.0  # secondes entre deux tours
+DETECTION = 3600  # une interrogation du service DHCP déjà en place par heure
 MISE_A_JOUR = 24 * 3600  # une recherche de nouvelle version par jour
 
 
@@ -68,6 +70,10 @@ class Service:
         self.empreintes: dict[str, tuple[int, int]] | None = None
         self.examens: dict[str, tuple[tuple[int, int], examen.Examen]] = {}
         self.extraction: threading.Thread | None = None
+        # Ce que le service DHCP déjà en place annonce aux postes PXE (module detection).
+        self.detection: threading.Thread | None = None
+        self.derniere_detection = 0.0
+        self.demarrage_dhcp: tuple[detection.Demarrage, str] | None = None  # et l'adresse du serveur
 
     def tourner(self) -> None:
         signal.signal(signal.SIGHUP, lambda *_: setattr(self, "a_relire", True))
@@ -90,6 +96,7 @@ class Service:
     def tour(self) -> None:
         if self.a_relire:
             self.a_relire = False
+            self.derniere_detection = 0.0  # réglages changés : on réinterroge
             self.reglages = config.lire()
             langue.choisir(self.reglages.langue)
             _log.info("réglages lus : %s", self.reglages)
@@ -136,6 +143,7 @@ class Service:
                              os.path.join(journal.RACINE, "dnsmasq.log")),
             dnsmasq.commande,
         )
+        self.detecter(carte, adresse)
         self.publier(carte, adresse, "")
 
     def publier(self, carte, adresse, attente: str) -> None:
@@ -155,6 +163,7 @@ class Service:
             "carte": carte or "",
             "adresse": str(adresse.ip) if adresse else "",
             "adresse_dynamique": reseau.adresse_dynamique(carte) if adresse else False,
+            "dhcp_demarrage": _demarrage(self.demarrage_dhcp, adresse),
             "attente": attente,
             "proxy_dhcp": self.reglages.proxy_dhcp,
             "dnsmasq": vivant(self.dnsmasq),
@@ -167,6 +176,32 @@ class Service:
             "ecartes": [{"chemin": e.chemin, "raison": e.raison} for e in self.inventaire.ecartes],
             "windows": {f"windows/{windows.nom(c, m[0])}": c for c, m in self.examens.items() if m[1].wim},
         })
+
+    def detecter(self, carte: str, adresse) -> None:
+        """Interroge le service DHCP déjà en place, en arrière-plan : au
+        démarrage, à chaque changement de réglages, puis une fois par heure."""
+        if self.detection and self.detection.is_alive():
+            return
+        if self.derniere_detection and time.monotonic() - self.derniere_detection < DETECTION:
+            return
+        self.derniere_detection = time.monotonic()
+        mac = reseau.mac(carte)
+        if not mac:
+            return
+
+        def interroger():
+            demarrage = detection.interroger(carte, adresse, mac)
+            if demarrage is None:
+                self.demarrage_dhcp = None
+                return
+            try:  # l'option 66 peut être un nom
+                ip = socket.gethostbyname(demarrage.serveur) if demarrage.serveur else ""
+            except OSError:
+                ip = demarrage.serveur
+            self.demarrage_dhcp = (demarrage, ip)
+
+        self.detection = threading.Thread(target=interroger, name="detection", daemon=True)
+        self.detection.start()
 
     def suivre_clonegator(self) -> None:
         """CloneGator, une fois par jour, en arrière-plan : ses 250 Mo
@@ -272,6 +307,16 @@ class Service:
                                                      self.inventaire.racine,
                                                      telechargements.IPXE.version() or "")):
             _log.info("menu reconstruit")
+
+
+def _demarrage(trouve: tuple[detection.Demarrage, str] | None, adresse) -> dict | None:
+    """Le serveur de démarrage annoncé par le service DHCP déjà en place, et
+    s'il s'agit de ce serveur-ci."""
+    if trouve is None or adresse is None:
+        return None
+    demarrage, ip = trouve
+    return {"serveur": demarrage.serveur, "fichier": demarrage.fichier,
+            "ce_serveur": ip == str(adresse.ip)}
 
 
 def _images(dossier: images.Dossier | None) -> set[str]:

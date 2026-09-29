@@ -1,10 +1,11 @@
 #!/bin/sh
 # Réseau d'essai isolé de GatorPXE (plan §1.2).
 #
-#   reseau-essai.sh monter [manuel] le pont, le DHCP « existant », la sortie par NAT ;
+#   reseau-essai.sh monter [manuel [SERVEUR]]
+#                                   le pont, le DHCP « existant », la sortie par NAT ;
 #                                   manuel : ce DHCP désigne lui-même les fichiers
 #                                   de démarrage, comme quand GatorPXE a son proxy
-#                                   coupé (§9)
+#                                   coupé (§9) ; SERVEUR : un autre que GatorPXE
 #   reseau-essai.sh autre           un second serveur PXE, sans DHCP, en .3 : cible
 #                                   des renvois (§8) — pxelinux en BIOS, GRUB en UEFI
 #   reseau-essai.sh demonter        tout retirer, postes compris
@@ -38,6 +39,7 @@ mourir() { echo "reseau-essai : $*" >&2; exit 1; }
 
 monter() {
     manuel=${1:-}
+    serveur=${2:-$RESEAU.1}
     mkdir -p "$ETAT"
     if ! ip link show "$PONT" >/dev/null 2>&1; then
         ip link add "$PONT" type bridge
@@ -64,10 +66,10 @@ monter() {
         # Les réglages que l'interface de GatorPXE demande de saisir (§9).
         set -- --dhcp-match=set:efi,option:client-arch,7 \
                --dhcp-match=set:efi,option:client-arch,9 \
-               --dhcp-boot=tag:!efi,undionly.kpxe,,"$RESEAU.1" \
-               --dhcp-boot=tag:efi,shimx64.efi,,"$RESEAU.1" \
+               --dhcp-boot=tag:!efi,undionly.kpxe,,"$serveur" \
+               --dhcp-boot=tag:efi,shimx64.efi,,"$serveur" \
                --dhcp-userclass=set:ipxe,iPXE \
-               --dhcp-boot=tag:ipxe,"http://$RESEAU.1:8069/menu.ipxe"
+               --dhcp-boot=tag:ipxe,"http://$serveur:8069/menu.ipxe"
     fi
     ip netns exec "$NS" dnsmasq "$@" \
             --conf-file=/dev/null --port=0 --interface=gpxe-dhcp1 --bind-interfaces \
@@ -220,12 +222,12 @@ arreter() {
 }
 
 case ${1:-} in
-    monter) monter "${2:-}" ;;
+    monter) monter "${2:-}" "${3:-}" ;;
     autre) autre ;;
     demonter) demonter ;;
     poste) [ $# -ge 3 ] || mourir "usage : poste NOM MODE [IMAGE]"; poste "$2" "$3" "${4:-}" ;;
     ecran) ecran "$2" ;;
     touches) shift; touches "$@" ;;
     arreter) arreter "$2" ;;
-    *) sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+    *) sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
 esac

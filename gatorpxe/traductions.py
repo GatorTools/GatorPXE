@@ -103,6 +103,18 @@ ANGLAIS: dict[str, str] = {
     "automatique ({carte})": "automatic ({carte})",
     "Réglages pour votre DHCP": "Settings for your DHCP",
     "Rien à configurer": "Nothing to configure",
+    "Le service DHCP déjà en place désigne déjà ce serveur (options 66 et 67) :":
+        "Your existing DHCP service already points to this server (options 66 and 67):",
+    "le proxy DHCP de GatorPXE n'est pas nécessaire. Vous pouvez le désactiver.":
+        "the GatorPXE proxy DHCP is not needed. You can turn it off.",
+    "Le service DHCP déjà en place désigne bien ce serveur (options 66 et 67).":
+        "Your existing DHCP service points to this server (options 66 and 67).",
+    "Le service DHCP déjà en place désigne un autre serveur de démarrage (option 66 : {serveur}).":
+        "Your existing DHCP service points to another boot server (option 66: {serveur}).",
+    "Les postes risquent de démarrer sur lui plutôt que sur GatorPXE.":
+        "Computers may boot from it rather than from GatorPXE.",
+    "Pour le garder accessible, ajoutez un renvoi vers ce serveur (Renvois).":
+        "To keep it reachable, add a redirect to that server (Redirects).",
     "Options 66 et 67 à configurer": "Options 66 and 67 to configure",
     "Actif": "On",
     "Coupé": "Off",
