@@ -5,6 +5,8 @@
 #                                   manuel : ce DHCP désigne lui-même les fichiers
 #                                   de démarrage, comme quand GatorPXE a son proxy
 #                                   coupé (§9)
+#   reseau-essai.sh autre           un second serveur PXE, sans DHCP, en .3 : cible
+#                                   des renvois (§8) — pxelinux en BIOS, GRUB en UEFI
 #   reseau-essai.sh demonter        tout retirer, postes compris
 #   reseau-essai.sh poste NOM MODE [IMAGE]
 #                                   démarrer un poste QEMU en démarrage réseau ;
@@ -95,13 +97,42 @@ FIN
     echo "réseau d'essai monté : $PONT ($RESEAU.1), DHCP existant en $RESEAU.2${manuel:+ (réglé à la main)}"
 }
 
+autre() {
+    ip link show "$PONT" >/dev/null 2>&1 || mourir "réseau non monté"
+    racine="$ETAT/autre"
+    mkdir -p "$racine/pxelinux.cfg" "$racine/grub"
+    cp /usr/lib/PXELINUX/pxelinux.0 /usr/lib/syslinux/modules/bios/ldlinux.c32 "$racine/"
+    cp /usr/lib/grub/x86_64-efi-signed/grubnetx64.efi.signed "$racine/grubx64.efi"
+    printf 'SAY Autre serveur PXE atteint (pxelinux)\nPROMPT 1\nTIMEOUT 0\n' > "$racine/pxelinux.cfg/default"
+    printf 'menuentry "Autre serveur PXE atteint (GRUB)" { true; }\n' > "$racine/grub/grub.cfg"
+    chmod -R a+rX "$ETAT" "$racine"
+    if ! ip netns list | grep -qw gpxe-autre; then
+        ip netns add gpxe-autre
+        ip link add gpxe-autre0 type veth peer name gpxe-autre1
+        ip link set gpxe-autre1 netns gpxe-autre
+        ip link set gpxe-autre0 master "$PONT" up
+        ip -n gpxe-autre addr add "$RESEAU.3/24" dev gpxe-autre1
+        ip -n gpxe-autre link set gpxe-autre1 up
+        ip -n gpxe-autre link set lo up
+    fi
+    [ -f "$ETAT/autre.pid" ] && kill "$(cat "$ETAT/autre.pid")" 2>/dev/null || true
+    ip netns exec gpxe-autre dnsmasq --conf-file=/dev/null --port=0 \
+        --interface=gpxe-autre1 --bind-interfaces --enable-tftp --tftp-root="$racine" \
+        --log-facility="$ETAT/autre.log" --pid-file="$ETAT/autre.pid"
+    echo "second serveur PXE en $RESEAU.3 : pxelinux.0 (BIOS), grubx64.efi (UEFI)"
+}
+
 demonter() {
     for f in "$ETAT"/poste-*.pid; do
         [ -f "$f" ] && kill "$(cat "$f")" 2>/dev/null || true
         rm -f "$f"
     done
-    [ -f "$ETAT/dhcp.pid" ] && kill "$(cat "$ETAT/dhcp.pid")" 2>/dev/null || true
-    rm -f "$ETAT/dhcp.pid"
+    for f in "$ETAT/dhcp.pid" "$ETAT/autre.pid"; do
+        [ -f "$f" ] && kill "$(cat "$f")" 2>/dev/null || true
+        rm -f "$f"
+    done
+    ip netns del gpxe-autre 2>/dev/null || true
+    ip link del gpxe-autre0 2>/dev/null || true
     nft delete table inet "$TABLE" 2>/dev/null || true
     ip netns del "$NS" 2>/dev/null || true
     ip link del gpxe-dhcp0 2>/dev/null || true
@@ -189,10 +220,11 @@ arreter() {
 
 case ${1:-} in
     monter) monter "${2:-}" ;;
+    autre) autre ;;
     demonter) demonter ;;
     poste) [ $# -ge 3 ] || mourir "usage : poste NOM MODE [IMAGE]"; poste "$2" "$3" "${4:-}" ;;
     ecran) ecran "$2" ;;
     touches) shift; touches "$@" ;;
     arreter) arreter "$2" ;;
-    *) sed -n '2,19p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
+    *) sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'; exit 1 ;;
 esac

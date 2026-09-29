@@ -67,3 +67,44 @@ class Dnsmasq(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Renvois(unittest.TestCase):
+    def script(self, *renvois):
+        return menu.script_menu(config.Reglages(renvois=list(renvois)), HTTP)
+
+    def test_wds_connait_ses_fichiers(self):
+        script = self.script(config.Renvoi("WDS de l'ecole", config.WDS, "10.0.0.5"))
+        self.assertIn("item r1 WDS de l'ecole", script)
+        self.assertIn("set netX/next-server 10.0.0.5", script)
+        self.assertIn("chain tftp://10.0.0.5/boot\\x64\\wdsnbp.com || goto echec", script)
+        self.assertIn(":r1u\nset netX/filename boot\\x64\\wdsmgfw.efi\n"
+                      "chain tftp://10.0.0.5/boot\\x64\\wdsmgfw.efi || goto echec", script)
+
+    def test_ipxe(self):
+        script = self.script(config.Renvoi("netboot.xyz", config.IPXE, "https://boot.netboot.xyz"))
+        self.assertIn("chain https://boot.netboot.xyz || goto echec", script)
+
+    def test_pxe_generique_uefi_seulement(self):
+        script = self.script(config.Renvoi("GRUB", config.PXE, "10.0.0.7", fichier_uefi="grubx64.efi"))
+        self.assertIn("iseq ${platform} efi && item r1 GRUB ||", script)
+        self.assertNotIn("goto r1u", script)
+
+    def test_renvois_apres_les_images_avant_le_disque(self):
+        script = self.script(config.Renvoi("A", config.IPXE, "http://a"))
+        self.assertLess(script.index("item r1 A"), script.index("item disque"))
+
+    def test_lecture_des_renvois(self):
+        import json, os, tempfile
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as dossier:
+            fichier = os.path.join(dossier, "g.json")
+            with open(fichier, "w") as f:
+                json.dump({"renvois": [
+                    {"nom": "W", "type": "wds", "adresse": "10.0.0.5"},
+                    {"nom": "sans adresse", "type": "wds", "adresse": ""},
+                    {"nom": "X", "type": "inconnu", "adresse": "1.2.3.4"},
+                    "pas un renvoi",
+                ]}, f)
+            with mock.patch.object(config, "FICHIER", fichier):
+                self.assertEqual([r.nom for r in config.lire().renvois], ["W"])

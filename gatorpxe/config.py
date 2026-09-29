@@ -3,8 +3,6 @@
 Écrits par l'interface, relus par le service ; on n'a jamais à les ouvrir
 (P5). Un fichier absent ou illisible donne les réglages par défaut : les
 postes démarrent même quand personne n'a rien réglé (P4).
-
-Les renvois (§8) viendront avec la phase 4.
 """
 
 from __future__ import annotations
@@ -12,7 +10,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from dataclasses import asdict, dataclass, fields
+from dataclasses import asdict, dataclass, field, fields
 
 _log = logging.getLogger("gatorpxe.config")
 
@@ -20,6 +18,33 @@ FICHIER = os.environ.get("GATORPXE_CONFIG", "/etc/gatorpxe/gatorpxe.json")
 
 DISQUE_LOCAL = "disque"
 CLONEGATOR = "clonegator"
+
+# Les types de renvoi (§8).
+WDS = "wds"
+IPXE = "ipxe"
+PXE = "pxe"
+TYPES_RENVOI = (WDS, IPXE, PXE)
+
+# Ce que demande un WDS, et MECM/SCCM qui démarre de même.
+WDS_BIOS = "boot\\x64\\wdsnbp.com"
+WDS_UEFI = "boot\\x64\\wdsmgfw.efi"
+
+
+@dataclass
+class Renvoi:
+    """Une entrée du menu qui envoie le poste vers un autre serveur (§8)."""
+
+    nom: str
+    type: str
+    adresse: str  # le serveur ; pour iPXE/HTTP, l'adresse du script (http://…)
+    fichier_bios: str = ""  # PXE générique : vide, l'entrée ne paraît pas en BIOS
+    fichier_uefi: str = ""  # PXE générique : vide, l'entrée ne paraît pas en UEFI
+
+    def fichiers(self) -> tuple[str, str]:
+        """Les fichiers à charger en BIOS et en UEFI : WDS les a d'office."""
+        if self.type == WDS:
+            return WDS_BIOS, WDS_UEFI
+        return self.fichier_bios, self.fichier_uefi
 
 
 @dataclass
@@ -31,6 +56,7 @@ class Reglages:
     delai: int = 10  # secondes avant l'entrée par défaut (§5)
     entree_defaut: str = DISQUE_LOCAL
     langue: str = "en"
+    renvois: list[Renvoi] = field(default_factory=list)  # dans l'ordre du menu
 
 
 def lire() -> Reglages:
@@ -52,6 +78,9 @@ def lire() -> Reglages:
     valeurs = {}
     for champ in fields(Reglages):
         valeur = brut.get(champ.name)
+        if champ.name == "renvois":
+            valeurs["renvois"] = _renvois(valeur)
+            continue
         attendu = type(getattr(defaut, champ.name))
         if valeur is None:
             continue
@@ -60,6 +89,24 @@ def lire() -> Reglages:
             continue
         valeurs[champ.name] = valeur
     return Reglages(**valeurs)
+
+
+def _renvois(brut) -> list[Renvoi]:
+    """Les renvois lisibles ; un renvoi abîmé est écarté seul."""
+    renvois = []
+    for element in brut if isinstance(brut, list) else []:
+        try:
+            renvoi = Renvoi(**{cle: element[cle] for cle in element
+                               if cle in {f.name for f in fields(Renvoi)}})
+        except (TypeError, KeyError):
+            renvoi = None
+        if (renvoi is None or renvoi.type not in TYPES_RENVOI
+                or not all(isinstance(getattr(renvoi, f.name), str) for f in fields(Renvoi))
+                or not renvoi.nom or not renvoi.adresse):
+            _log.warning("%s : renvoi ignoré (%r)", FICHIER, element)
+            continue
+        renvois.append(renvoi)
+    return renvois
 
 
 def ecrire(reglages: Reglages) -> None:

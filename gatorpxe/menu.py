@@ -3,8 +3,8 @@
 Ne lance rien et ne lit rien : il reçoit les réglages et l'inventaire des
 images, et rend un texte, ce qui le rend testable seul.
 
-Ordre : CloneGator, les images (un sous-dossier devient un sous-menu), puis le
-disque local. iPXE n'affiche que l'ASCII : les accents sont retirés des textes.
+Ordre : CloneGator, les images (un sous-dossier devient un sous-menu), les
+renvois vers d'autres serveurs, puis le disque local. iPXE n'affiche que l'ASCII : les accents sont retirés des textes.
 Les adresses sont écrites en entier : l'iPXE de certaines cartes réseau ignore
 `${cwduri}`.
 """
@@ -77,6 +77,41 @@ class _Script:
         ]
         self.menus.append(bloc)
 
+    def items_renvois(self, renvois: list[config.Renvoi]) -> list[str]:
+        items = []
+        for renvoi in renvois:
+            etiquette = self.identifiant("r")
+            texte = ascii(renvoi.nom)
+            if renvoi.type == config.IPXE:
+                items.append(f"item {etiquette} {texte}")
+                self.actions.append([f":{etiquette}", *_ou_echec([f"chain {renvoi.adresse}"])])
+                continue
+            bios, uefi = renvoi.fichiers()
+            if bios and uefi:
+                items.append(f"item {etiquette} {texte}")
+            elif uefi or bios:
+                # Un seul fichier donné : l'entrée ne paraît que là où il sert.
+                items.append(f"iseq ${{platform}} {'efi' if uefi else 'pcbios'} && item {etiquette} {texte} ||")
+            else:
+                continue
+            # Le programme chargé lit le serveur dans la réponse DHCP que lui
+            # transmet iPXE : sans next-server, il reviendrait chez GatorPXE.
+            # La réponse du proxy DHCP de GatorPXE, gardée par iPXE, l'emporte
+            # sur la réponse DHCP : elle est corrigée aussi, quand elle existe.
+            bloc = [f":{etiquette}", f"set netX/next-server {renvoi.adresse}",
+                    f"set proxydhcp/next-server {renvoi.adresse} ||",
+                    f"set pxebs/next-server {renvoi.adresse} ||"]
+            if uefi and bios:
+                bloc.append(f"iseq ${{platform}} efi && goto {etiquette}u ||")
+            if bios:
+                bloc += [f"set netX/filename {bios}",
+                         *_ou_echec([f"chain tftp://{renvoi.adresse}/{bios}"])]
+            if uefi:
+                bloc += [f":{etiquette}u", f"set netX/filename {uefi}",
+                         *_ou_echec([f"chain tftp://{renvoi.adresse}/{uefi}"])]
+            self.actions.append(bloc)
+        return items
+
     def demarrer(self, image: images.Image) -> list[str]:
         url = self.url(image.chemin)
         if image.type == images.WIM:
@@ -99,6 +134,7 @@ def script_menu(reglages: config.Reglages, adresse_http: str, clonegator: bool =
         principal.append(f"item {config.CLONEGATOR} CloneGator")
     if inventaire:
         principal += script.items_images(inventaire, PRINCIPAL)
+    principal += script.items_renvois(reglages.renvois)
     principal.append(f"item {config.DISQUE_LOCAL} {ascii(t('Démarrer sur le disque local'))}")
     choix = f"choose --default {config.DISQUE_LOCAL}"
     if reglages.delai > 0:
