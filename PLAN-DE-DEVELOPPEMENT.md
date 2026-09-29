@@ -14,6 +14,7 @@ Les renvois `§n` pointent vers l'analyse.
 | 0.7 | 2026-09-28 | Claude | Phase 3 commencée sans les images Windows, qui viendront de Kevin. Analyse 0.6 |
 | 0.8 | 2026-09-28 | Kevin + Claude | Analyse 0.7 : examen des ISO par 7zip et marques au menu (module `examen`) |
 | 0.9 | 2026-09-29 | Claude | Phase 3 : ISO Windows et WIM essayés avec Hiren's BootCD PE ; phase 4 commencée. Analyse 0.8 |
+| 0.10 | 2026-09-29 | Kevin + Claude | Le WDS de production n'est pas joignable depuis le segment de la station : l'essai du renvoi WDS passe à la recette (phase 6), sur un segment où il répond |
 
 ---
 
@@ -282,7 +283,9 @@ en phase 5) et paraissent au menu après les images. `reseau-essai.sh autre` mon
 serveur PXE en .3 (pxelinux en BIOS, GRUB signé d'Ubuntu en UEFI). iPXE/HTTP vers netboot.xyz :
 son menu s'ouvre en BIOS et en UEFI Secure Boot. PXE générique : pxelinux atteint son menu en
 BIOS. En UEFI, GRUB est chargé et connaît son serveur, mais n'y lit pas sa configuration ; point
-ouvert. WDS : à essayer.
+ouvert. WDS : pas joignable depuis le segment de la station (vérifié par Kevin, et par un poste
+virtuel branché sur ce segment avec son accord : le DHCP n'y donne ni option 66 ni 67, et aucun
+WDS ne répond) ; l'essai passe à la recette, avec le GRUB en UEFI.
 
 Enseignements :
 
@@ -312,7 +315,8 @@ la console de la station.
   `gatorpxe/` du site mise à jour
 
 **Recette** : sur un Ubuntu 24.04 et un Debian 13 neufs, installation par apt, puis démarrage de
-vrais postes sur le réseau physique séparé (§1.2), à côté d'un DHCP ordinaire (§16).
+vrais postes sur le réseau physique séparé (§1.2), à côté d'un DHCP ordinaire (§16). Le renvoi
+vers WDS, en BIOS et en UEFI Secure Boot, s'essaie depuis un segment où le WDS de l'école répond.
 
 **Fini quand** : un serveur neuf, installé par `apt install gatorpxe` sans rien régler, fait
 démarrer de vrais postes sur CloneGator et sur une image déposée.
