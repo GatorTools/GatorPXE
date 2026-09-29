@@ -1,6 +1,6 @@
 # GatorPXE — Plan de développement
 
-Compagnon de [ANALYSE-FONCTIONNELLE.md](ANALYSE-FONCTIONNELLE.md), révision 0.13.
+Compagnon de [ANALYSE-FONCTIONNELLE.md](ANALYSE-FONCTIONNELLE.md), révision 0.14.
 Les renvois `§n` pointent vers l'analyse.
 
 | Rév. | Date | Auteur | Changement |
@@ -20,6 +20,7 @@ Les renvois `§n` pointent vers l'analyse.
 | 0.13 | 2026-09-29 | Kevin + Claude | Recette : renvoi WDS en UEFI bloqué par une régression d'iPXE 2.0.0, reproduite sur la station. Analyse 0.11 |
 | 0.14 | 2026-09-29 | Kevin + Claude | Marque « pas en UEFI pour l'instant » sur le renvoi WDS ; nouvelle version publiée. Analyse 0.12 |
 | 0.15 | 2026-09-29 | Kevin + Claude | Adresse dynamique essayée (le service suit en 3 s) ; avertissement en proxy coupé. Analyse 0.13 |
+| 0.16 | 2026-09-29 | Kevin + Claude | Détection des options 66 et 67 du DHCP en place (module `detection`). Analyse 0.14 |
 
 ---
 
@@ -95,6 +96,7 @@ gatorpxe/
   renvois.py       WDS, iPXE/HTTP, PXE générique (§8)
   menu.py          le script iPXE du menu, à partir de l'inventaire et des réglages
   etat.py          ce que voit le service, écrit à chaque tour pour l'interface
+  detection.py     ce que le DHCP déjà en place annonce aux postes PXE (DHCPINFORM)
   postes.py        derniers postes démarrés, lus dans le journal de lighttpd
   ui/
     model.py       état affiché, sans curses — testable seul
@@ -365,6 +367,10 @@ Enseignements :
   avec le correctif proposé n° 1718, toujours 0.0.0.0. Le ticket le savait déjà ; le mainteneur
   prépare une autre correction. Les réglages du menu de GatorPXE (`next-server` de la carte, du
   proxy et du serveur de démarrage) suffisent : rien à changer quand iPXE sera corrigé.
+- Détection des options 66 et 67 : un serveur DHCP répond au DHCPINFORM au port d'origine
+  (dnsmasq) ou au port 68 (celui de l'école), que le client DHCP de la machine occupe déjà. La
+  réponse est donc lue sur la carte par une socket brute ; liée à un pont, elle ne reçoit rien :
+  elle écoute toutes les cartes et filtre par nom.
 - Lancé depuis le dossier du dépôt, `python3 -m gatorpxe` prenait le code du dossier courant
   plutôt que celui installé : le lanceur passe `-P` (Python 3.11 ou plus). CloneGator a le même
   lanceur.

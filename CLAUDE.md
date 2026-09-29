@@ -5,8 +5,8 @@ serveur Debian ou Ubuntu, il propose aux postes du réseau un menu construit
 tout seul — CloneGator, des images démarrables déposées dans un dossier, des
 renvois vers d'autres serveurs (WDS…).
 
-**État : version d'essai publiée (apt install gatorpxe).** Analyse fonctionnelle (révision 0.13) et plan de
-développement (révision 0.15) ; recette en cours chez Kevin ; phases 1, 2 et 5 faites, en attente de la revue de Kevin ; phases 3 et 4 en cours (ISO d'installation de Windows 11 et WDS restent).
+**État : version d'essai publiée (apt install gatorpxe).** Analyse fonctionnelle (révision 0.14) et plan de
+développement (révision 0.16) ; recette en cours chez Kevin ; phases 1, 2 et 5 faites, en attente de la revue de Kevin ; phases 3 et 4 en cours (ISO d'installation de Windows 11 et WDS restent).
 
 ## Les documents font foi
 
