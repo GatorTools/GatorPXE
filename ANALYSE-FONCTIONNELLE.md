@@ -17,6 +17,7 @@ seul.
 | 0.7 | 2026-09-28 | Kevin + Claude | Sanboot gardé en première version ; les ISO sont examinées et marquées au menu, « incompatible réseau » et « sans Secure Boot » (§6) |
 | 0.8 | 2026-09-29 | Claude | Essais Windows (Hiren's BootCD PE) et renvois : un `boot.wim` suffit à wimboot ; résultats des renvois, GRUB en UEFI en point ouvert (§6, §8, §16) |
 | 0.9 | 2026-09-29 | Claude | Interface : la langue vaut aussi pour le menu des postes ; entrée par défaut, disque local ou CloneGator ; état du service et derniers postes (§11) |
+| 0.10 | 2026-09-29 | Claude | Paquet : Python 3.11 ou plus, `iproute2` et `ca-certificates` en dépendances (§14) |
 
 ---
 
@@ -298,9 +299,10 @@ wget -qO- gatortools.github.io/apt/install.sh | sudo sh
 sudo apt install gatorpxe
 ```
 
-- dépendances : `python3`, `dnsmasq-base` (le programme seul, sans le service système),
-  `lighttpd`, `7zip` (pour extraire les fichiers d'une ISO Windows : elles sont au format
-  UDF, que 7zip lit sans monter l'image) ;
+- dépendances : `python3` (3.11 ou plus), `dnsmasq-base` (le programme seul, sans le service
+  système), `lighttpd`, `7zip` (pour extraire les fichiers d'une ISO Windows : elles sont au
+  format UDF, que 7zip lit sans monter l'image), `iproute2`, `ca-certificates` (téléchargements
+  en HTTPS) ;
 - à l'installation : le service démarre, proxy DHCP actif ; si lighttpd n'était pas installé avant,
   son serveur web par défaut (port 80) est désactivé, jamais s'il l'était déjà (P3) ;
 - à la désinstallation : le service s'arrête ; les images et les réglages restent.

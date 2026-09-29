@@ -1,6 +1,6 @@
 # GatorPXE — Plan de développement
 
-Compagnon de [ANALYSE-FONCTIONNELLE.md](ANALYSE-FONCTIONNELLE.md), révision 0.9.
+Compagnon de [ANALYSE-FONCTIONNELLE.md](ANALYSE-FONCTIONNELLE.md), révision 0.10.
 Les renvois `§n` pointent vers l'analyse.
 
 | Rév. | Date | Auteur | Changement |
@@ -16,6 +16,7 @@ Les renvois `§n` pointent vers l'analyse.
 | 0.9 | 2026-09-29 | Claude | Phase 3 : ISO Windows et WIM essayés avec Hiren's BootCD PE ; phase 4 commencée. Analyse 0.8 |
 | 0.10 | 2026-09-29 | Kevin + Claude | Le WDS de production n'est pas joignable depuis le segment de la station : l'essai du renvoi WDS passe à la recette (phase 6), sur un segment où il répond |
 | 0.11 | 2026-09-29 | Claude | Phase 5 faite, en attente de la revue de Kevin. Analyse 0.9 |
+| 0.12 | 2026-09-29 | Kevin + Claude | Phase 6 : paquet publié en release et par le dépôt APT, à la demande de Kevin, pour son essai sur un serveur à lui. Analyse 0.10 |
 
 ---
 
@@ -326,9 +327,9 @@ Enseignements :
 - Le contenu tient dans 110 colonnes : les explications trop longues étaient coupées ; elles ont
   été raccourcies.
 
-### Phase 6 — Paquet et recette · taille M
+### Phase 6 — Paquet et recette · taille M · **en cours : paquet publié, recette par Kevin**
 
-- `.deb` (`dnsmasq-base`, `lighttpd`, `7zip`, `python3`) : unité systemd, service démarré
+- `.deb` (`dnsmasq-base`, `lighttpd`, `7zip`, `python3`…) : unité systemd, service démarré
   à l'installation, serveur web par défaut de lighttpd désactivé seulement s'il vient d'être
   installé (§14, P3)
 - release GitHub ; ligne `GatorTools/GatorPXE` dans `logiciels.txt` du dépôt APT ; page
@@ -340,6 +341,21 @@ vers WDS, en BIOS et en UEFI Secure Boot, s'essaie depuis un segment où le WDS 
 
 **Fini quand** : un serveur neuf, installé par `apt install gatorpxe` sans rien régler, fait
 démarrer de vrais postes sur CloneGator et sur une image déposée.
+
+**Où on en est (2026-09-29).** `./outils/construire-paquet.sh` construit
+`dist/gatorpxe_<version>_all.deb` (40 Ko), version datée à la minute du commit. Sur la station :
+installation, mise à jour, désinstallation (le service s'arrête, réglages et images restent) et
+réinstallation essayées ; l'interface installée et un poste Secure Boot jusqu'au menu. Release
+`v0.1.0-dev.202609291417.g9ba91cf` publiée avec sa copie `gatorpxe.deb` ; `GatorTools/GatorPXE`
+ajouté à `logiciels.txt` : `apt install gatorpxe` fonctionne depuis le dépôt de GatorTools.
+Kevin fait la recette sur un serveur à lui. La page `gatorpxe/` du site attend la fin de la
+recette.
+
+Enseignements :
+
+- Lancé depuis le dossier du dépôt, `python3 -m gatorpxe` prenait le code du dossier courant
+  plutôt que celui installé : le lanceur passe `-P` (Python 3.11 ou plus). CloneGator a le même
+  lanceur.
 
 ---
 

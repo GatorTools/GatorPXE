@@ -5,8 +5,8 @@ serveur Debian ou Ubuntu, il propose aux postes du réseau un menu construit
 tout seul — CloneGator, des images démarrables déposées dans un dossier, des
 renvois vers d'autres serveurs (WDS…).
 
-**État : phase 5 faite.** Analyse fonctionnelle (révision 0.9) et plan de
-développement (révision 0.11) ; phases 1, 2 et 5 faites, en attente de la revue de Kevin ; phases 3 et 4 en cours (ISO d'installation de Windows 11 et WDS restent).
+**État : version d'essai publiée (apt install gatorpxe).** Analyse fonctionnelle (révision 0.10) et plan de
+développement (révision 0.12) ; recette en cours chez Kevin ; phases 1, 2 et 5 faites, en attente de la revue de Kevin ; phases 3 et 4 en cours (ISO d'installation de Windows 11 et WDS restent).
 
 ## Les documents font foi
 
@@ -78,7 +78,10 @@ Station de test sous Ubuntu 24.04, **root comme seul utilisateur**, commandes
 sans `sudo`. Cinq SSD d'essai dans les baies, sacrifiables. **Le réseau de
 la station porte un WDS de production** : jamais de proxy DHCP ni de serveur de
 démarrage sur une carte physique ; tous les essais se font dans le réseau de VM
-isolé du plan (§1.2), qui ne sort que par NAT. Pas de
+isolé du plan (§1.2), qui ne sort que par NAT. Sur la station, le service tourne
+depuis le paquet installé, réglé sur le pont d'essai (`/etc/gatorpxe/gatorpxe.json`) :
+pour essayer du code, construire le paquet et l'installer
+(`./outils/construire-paquet.sh`, puis `apt install ./dist/…`). Pas de
 virtualisation matérielle : QEMU tourne en émulation (lent, mais utilisable
 pour démarrer un poste virtuel en PXE). Partage réseau d'essai de Kevin :
 `//10.150.19.15/kevin`, identifiants dans
