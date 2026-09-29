@@ -357,8 +357,12 @@ Enseignements :
 - Recette de Kevin, WDS en UEFI : `wdsmgfw.efi` est chargé mais affiche « Server IP: 0.0.0.0 »
   (0xc000000e). Reproduit sur la station avec le même fichier, tiré du `boot.wim` de Hiren's
   (identique à celui du WDS de Kevin) et servi par le second serveur d'essai. Aucun réglage
-  d'iPXE n'y change rien : c'est la régression d'iPXE 2.0.0 du ticket n° 1716 (correctif proposé,
-  n° 1718, non fusionné).
+  d'iPXE n'y change rien : c'est la régression d'iPXE 2.0.0 du ticket n° 1716. Essai avec iPXE
+  compilé sur la station (poste UEFI sans Secure Boot, même script) : juste avant le commit
+  fautif 5a17d8d, `wdsmgfw.efi` trouve son serveur et le contacte ; sur la branche principale et
+  avec le correctif proposé n° 1718, toujours 0.0.0.0. Le ticket le savait déjà ; le mainteneur
+  prépare une autre correction. Les réglages du menu de GatorPXE (`next-server` de la carte, du
+  proxy et du serveur de démarrage) suffisent : rien à changer quand iPXE sera corrigé.
 - Lancé depuis le dossier du dépôt, `python3 -m gatorpxe` prenait le code du dossier courant
   plutôt que celui installé : le lanceur passe `-P` (Python 3.11 ou plus). CloneGator a le même
   lanceur.

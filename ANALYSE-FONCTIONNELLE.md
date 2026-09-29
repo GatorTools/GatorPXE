@@ -209,9 +209,11 @@ renvoi connaît bien son serveur mais n'y lit pas sa configuration : point ouver
 **WDS en UEFI : limite d'iPXE 2.0.0.** Chargé par renvoi, `wdsmgfw.efi` affiche « Server IP:
 0.0.0.0 » et s'arrête (0xc000000e), sur le WDS de l'école comme sur la station. C'est une
 régression d'iPXE 2.0.0 (ticket iPXE n° 1716) : le programme de Microsoft cherche l'interface
-réseau sur son propre appareil, où iPXE ne la met plus. Un correctif est proposé (n° 1718). Le
-service tient iPXE à jour chaque jour : une release corrigée sera prise d'elle-même. En BIOS,
-`wdsnbp.com` n'est pas concerné.
+réseau sur son propre appareil, où iPXE ne la met plus. Le correctif proposé (n° 1718) ne suffit
+pas ; son mainteneur en prépare un autre, sans date. Avec un iPXE d'avant la régression, compilé
+pour l'essai, le même renvoi fonctionne tel que GatorPXE le règle : le service tenant iPXE à
+jour chaque jour, une release corrigée sera prise d'elle-même, sans rien changer à GatorPXE. En
+BIOS, `wdsnbp.com` n'est pas concerné.
 
 ---
 
