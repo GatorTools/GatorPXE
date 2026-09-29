@@ -342,6 +342,15 @@ class Application:
     def voir_reglages_dhcp(self) -> None:
         def construire():
             vu = etat.lire() or {}
+            if self.reglages.proxy_dhcp:
+                # Proxy actif : ce que ça implique, rien à configurer ; en dessous,
+                # ce que la détection a trouvé.
+                lignes = [
+                    Ligne.de(t("Le proxy DHCP est activé : il permet aux ordinateurs du réseau qui démarrent en "
+                               "PXE de trouver GatorPXE automatiquement."), FORT),
+                    Ligne.de(t("Vous n'avez rien à configurer dans le service DHCP du réseau.")),
+                ] + lignes_annonce(vu, proxy=True)
+                return self._page(t("Réglages pour votre DHCP"), [], _touches_lire()), lignes
             serveur = vu.get("adresse") or t("(adresse du serveur)")
             lignes = [
                 _etat_ligne(t("Serveur"), serveur, FORT),
@@ -355,31 +364,18 @@ class Application:
                 Ligne.de(t("si la classe utilisateur (option 77) vaut « iPXE », le fichier devient"), NORMAL),
                 Ligne.de(f"  http://{serveur}:{PORT_HTTP}/menu.ipxe", FORT),
                 Ligne.de(t("En UEFI, rien de plus : iPXE trouve le menu de lui-même."), DETAIL),
-            ]
-            annonce = lignes_annonce(vu, self.reglages.proxy_dhcp)
-            if self.reglages.proxy_dhcp:
-                # Proxy actif : ce que ça implique, et rien à configurer.
-                lignes = annonce + [
-                    Ligne.de(t("Le proxy DHCP est activé : vous n'avez rien à configurer dans le service DHCP "
-                               "déjà en place."), FORT),
-                    Ligne.de(""),
-                    Ligne.de(t("Les ordinateurs du réseau reçoivent toujours leur adresse IP de ce service DHCP.")),
-                    Ligne.de(t("Ceux qui démarrent par le réseau (PXE) trouvent GatorPXE automatiquement, grâce "
-                               "à son proxy DHCP.")),
-                ]
-                return self._page(t("Réglages pour votre DHCP"), [], _touches_lire()), lignes
-            entete = [Ligne.de(t("Le proxy DHCP est désactivé. Si ce n'est pas déjà fait, configurez le service "
-                                 "DHCP déjà en place (options 66 et 67) :"), FORT)]
-            entete = annonce + entete
+            ] + lignes_annonce(vu, proxy=False)
             if vu.get("adresse_dynamique"):
                 # Une réservation DHCP ne se voit pas d'ici : « si ce n'est pas déjà fait ».
                 lignes += [
                     Ligne.de(""),
-                    Ligne.de(t("Cette machine reçoit son adresse du service DHCP, et le proxy DHCP est "
+                    Ligne.de(t("Cette machine reçoit son adresse du service DHCP du réseau, et le proxy DHCP est "
                                "désactivé :"), AVERTISSEMENT),
-                    Ligne.de(t("si ce n'est pas déjà fait, réservez cette adresse dans le service DHCP, "
+                    Ligne.de(t("si ce n'est pas déjà fait, réservez cette adresse dans le service DHCP du réseau, "
                                "ou donnez-lui une adresse fixe."), AVERTISSEMENT),
                 ]
+            entete = [Ligne.de(t("Le proxy DHCP est désactivé. Si ce n'est pas déjà fait, configurez le service "
+                                 "DHCP du réseau (options 66 et 67) :"), FORT)]
             return self._page(t("Réglages pour votre DHCP"), entete, _touches_lire()), lignes
         self.ecran.afficher(construire)
 
@@ -579,31 +575,35 @@ def verifier_renvoi(type_: str, valeurs: dict[str, str]) -> str:
 
 
 def autre_serveur(vu: dict | None) -> bool:
-    """Le service DHCP déjà en place désigne-t-il un autre serveur de démarrage ?"""
+    """Le service DHCP du réseau désigne-t-il un autre serveur PXE ?"""
     annonce = (vu or {}).get("dhcp_demarrage")
     return bool(annonce and not annonce.get("ce_serveur"))
 
 
 def lignes_annonce(vu: dict, proxy: bool) -> list[Ligne]:
-    """Ce que le service DHCP déjà en place annonce aux postes PXE, en tête de
-    l'écran des réglages DHCP ; rien s'il n'annonce rien."""
+    """Ce que le service DHCP du réseau annonce aux postes PXE, sous l'état du
+    proxy dans l'écran des réglages DHCP ; rien s'il n'annonce rien."""
     annonce = vu.get("dhcp_demarrage")
     if not annonce:
         return []
     if annonce.get("ce_serveur") and proxy:
-        return [Ligne.de(t("Le service DHCP déjà en place désigne déjà ce serveur (options 66 et 67) :"), OK),
-                Ligne.de(t("le proxy DHCP de GatorPXE n'est pas nécessaire. Vous pouvez le désactiver."), OK),
-                Ligne.de("")]
+        return [Ligne.de(""),
+                Ligne.de(t("Les configurations du service DHCP du réseau désignent ce serveur GatorPXE "
+                           "(options 66 et 67) :"), OK),
+                Ligne.de(t("le proxy DHCP de GatorPXE n'est pas nécessaire, vous pouvez le désactiver."), OK)]
     if annonce.get("ce_serveur"):
-        return [Ligne.de(t("Le service DHCP déjà en place désigne bien ce serveur (options 66 et 67)."), OK),
-                Ligne.de("")]
-    return [Ligne([("! ", AVERTISSEMENT), (t("Le service DHCP déjà en place désigne un autre serveur de démarrage "
-                                                "(option 66 : {serveur}).", serveur=annonce.get("serveur")),
-                                              AVERTISSEMENT)]),
-            Ligne.de("  " + t("Les postes risquent de démarrer sur lui plutôt que sur GatorPXE."), AVERTISSEMENT),
-            Ligne.de("  " + t("Pour le garder accessible, ajoutez un renvoi vers ce serveur (Renvois)."),
-                     AVERTISSEMENT),
-            Ligne.de("")]
+        return [Ligne.de(""),
+                Ligne.de(t("Les configurations du service DHCP du réseau désignent bien ce serveur GatorPXE "
+                           "(options 66 et 67)."), OK)]
+    if proxy:
+        premiere = t("Le proxy DHCP de GatorPXE est activé. Cependant, les configurations du service DHCP "
+                     "du réseau")
+    else:
+        premiere = t("Les configurations du service DHCP du réseau")
+    return [Ligne.de(""),
+            Ligne([("! ", AVERTISSEMENT), (premiere, AVERTISSEMENT)]),
+            Ligne.de("  " + t("désignent un autre serveur PXE (option 66 : {serveur}). Corrigez-les dans le "
+                              "service DHCP du réseau.", serveur=annonce.get("serveur")), AVERTISSEMENT)]
 
 
 def service_actif() -> bool:

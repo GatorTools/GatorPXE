@@ -103,18 +103,6 @@ ANGLAIS: dict[str, str] = {
     "automatique ({carte})": "automatic ({carte})",
     "Réglages pour votre DHCP": "Settings for your DHCP",
     "Rien à configurer": "Nothing to configure",
-    "Le service DHCP déjà en place désigne déjà ce serveur (options 66 et 67) :":
-        "Your existing DHCP service already points to this server (options 66 and 67):",
-    "le proxy DHCP de GatorPXE n'est pas nécessaire. Vous pouvez le désactiver.":
-        "the GatorPXE proxy DHCP is not needed. You can turn it off.",
-    "Le service DHCP déjà en place désigne bien ce serveur (options 66 et 67).":
-        "Your existing DHCP service points to this server (options 66 and 67).",
-    "Le service DHCP déjà en place désigne un autre serveur de démarrage (option 66 : {serveur}).":
-        "Your existing DHCP service points to another boot server (option 66: {serveur}).",
-    "Les postes risquent de démarrer sur lui plutôt que sur GatorPXE.":
-        "Computers may boot from it rather than from GatorPXE.",
-    "Pour le garder accessible, ajoutez un renvoi vers ce serveur (Renvois).":
-        "To keep it reachable, add a redirect to that server (Redirects).",
     "Options 66 et 67 à configurer": "Options 66 and 67 to configure",
     "Actif": "On",
     "Coupé": "Off",
@@ -135,19 +123,30 @@ ANGLAIS: dict[str, str] = {
     "si la classe utilisateur (option 77) vaut « iPXE », le fichier devient":
         "when the user class (option 77) is \"iPXE\", the file becomes",
     "En UEFI, rien de plus : iPXE trouve le menu de lui-même.": "For UEFI, nothing more: iPXE finds the menu by itself.",
-    "Le proxy DHCP est activé : vous n'avez rien à configurer dans le service DHCP déjà en place.":
-        "The proxy DHCP is on: you have nothing to configure in your existing DHCP service.",
-    "Les ordinateurs du réseau reçoivent toujours leur adresse IP de ce service DHCP.":
-        "Computers on the network still get their IP address from that DHCP service.",
-    "Ceux qui démarrent par le réseau (PXE) trouvent GatorPXE automatiquement, grâce à son proxy DHCP.":
-        "Those booting from the network (PXE) find GatorPXE automatically, through its proxy DHCP.",
-    "Le proxy DHCP est désactivé. Si ce n'est pas déjà fait, configurez le service DHCP déjà en place "
+    "Le proxy DHCP est désactivé. Si ce n'est pas déjà fait, configurez le service DHCP du réseau "
     "(options 66 et 67) :":
-        "The proxy DHCP is off. If not already done, configure your existing DHCP service (options 66 and 67):",
-    "Cette machine reçoit son adresse du service DHCP, et le proxy DHCP est désactivé :":
-        "This machine gets its address from the DHCP service, and the proxy DHCP is off:",
-    "si ce n'est pas déjà fait, réservez cette adresse dans le service DHCP, ou donnez-lui une adresse fixe.":
-        "if not already done, reserve this address in the DHCP service, or give it a static address.",
+        "The proxy DHCP is off. If not already done, configure the network's DHCP service (options 66 and 67):",
+    "Le proxy DHCP est activé : il permet aux ordinateurs du réseau qui démarrent en PXE de trouver GatorPXE "
+    "automatiquement.":
+        "The proxy DHCP is on: it lets computers on the network that boot with PXE find GatorPXE automatically.",
+    "Vous n'avez rien à configurer dans le service DHCP du réseau.":
+        "You have nothing to configure in the network's DHCP service.",
+    "Les configurations du service DHCP du réseau désignent ce serveur GatorPXE (options 66 et 67) :":
+        "The network's DHCP service settings point to this GatorPXE server (options 66 and 67):",
+    "le proxy DHCP de GatorPXE n'est pas nécessaire, vous pouvez le désactiver.":
+        "the GatorPXE proxy DHCP is not needed, you can turn it off.",
+    "Les configurations du service DHCP du réseau désignent bien ce serveur GatorPXE (options 66 et 67).":
+        "The network's DHCP service settings point to this GatorPXE server (options 66 and 67).",
+    "Le proxy DHCP de GatorPXE est activé. Cependant, les configurations du service DHCP du réseau":
+        "The GatorPXE proxy DHCP is on. However, the network's DHCP service settings",
+    "Les configurations du service DHCP du réseau": "The network's DHCP service settings",
+    "désignent un autre serveur PXE (option 66 : {serveur}). Corrigez-les dans le service DHCP du réseau.":
+        "point to another PXE server (option 66: {serveur}). Correct them in the network's DHCP service.",
+    "Cette machine reçoit son adresse du service DHCP du réseau, et le proxy DHCP est désactivé :":
+        "This machine gets its address from the network's DHCP service, and the proxy DHCP is off:",
+    "si ce n'est pas déjà fait, réservez cette adresse dans le service DHCP du réseau, ou donnez-lui une "
+    "adresse fixe.":
+        "if not already done, reserve this address in the network's DHCP service, or give it a static address.",
     "Dossier": "Folder",
     "Déposer une image ici suffit : elle paraît au menu. Un sous-dossier donne un sous-menu.":
         "Dropping an image here is enough: it shows in the menu. A subfolder gives a submenu.",

@@ -23,7 +23,7 @@ from . import (VERSION, chemins, config, detection, dnsmasq, etat, examen, image
 _log = logging.getLogger("gatorpxe.service")
 
 TOUR = 5.0  # secondes entre deux tours
-DETECTION = 3600  # une interrogation du service DHCP déjà en place par heure
+DETECTION = 3600  # une interrogation du service DHCP du réseau par heure
 MISE_A_JOUR = 24 * 3600  # une recherche de nouvelle version par jour
 
 
@@ -70,7 +70,7 @@ class Service:
         self.empreintes: dict[str, tuple[int, int]] | None = None
         self.examens: dict[str, tuple[tuple[int, int], examen.Examen]] = {}
         self.extraction: threading.Thread | None = None
-        # Ce que le service DHCP déjà en place annonce aux postes PXE (module detection).
+        # Ce que le service DHCP du réseau annonce aux postes PXE (module detection).
         self.detection: threading.Thread | None = None
         self.derniere_detection = 0.0
         self.demarrage_dhcp: tuple[detection.Demarrage, str] | None = None  # et l'adresse du serveur
@@ -178,7 +178,7 @@ class Service:
         })
 
     def detecter(self, carte: str, adresse) -> None:
-        """Interroge le service DHCP déjà en place, en arrière-plan : au
+        """Interroge le service DHCP du réseau, en arrière-plan : au
         démarrage, à chaque changement de réglages, puis une fois par heure."""
         if self.detection and self.detection.is_alive():
             return
@@ -310,7 +310,7 @@ class Service:
 
 
 def _demarrage(trouve: tuple[detection.Demarrage, str] | None, adresse) -> dict | None:
-    """Le serveur de démarrage annoncé par le service DHCP déjà en place, et
+    """Le serveur de démarrage annoncé par le service DHCP du réseau, et
     s'il s'agit de ce serveur-ci."""
     if trouve is None or adresse is None:
         return None

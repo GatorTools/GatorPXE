@@ -1,4 +1,4 @@
-"""Ce que le service DHCP déjà en place dit du démarrage réseau (§9 de l'analyse).
+"""Ce que le service DHCP du réseau dit du démarrage réseau (§9 de l'analyse).
 
 Un DHCPINFORM, en se présentant comme un poste PXE, demande au service DHCP
 les options 66 et 67 (serveur et fichier de démarrage). Il ne prend aucun bail.
@@ -31,7 +31,7 @@ CLASSE = b"PXEClient:Arch:00007:UNDI:003016"
 
 @dataclass
 class Demarrage:
-    """Le serveur de démarrage que désigne le service DHCP déjà en place."""
+    """Le serveur de démarrage que désigne le service DHCP du réseau."""
 
     serveur: str  # option 66, ou à défaut le champ « next-server »
     fichier: str  # option 67, ou à défaut le champ « file »
