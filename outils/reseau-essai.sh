@@ -13,6 +13,7 @@
 #                                   MODE : bios, uefi ou sb (UEFI Secure Boot) ;
 #                                   IMAGE : son disque local, jamais modifié
 #                                   (une ISO hybride démarrable, par exemple)
+#                                   (mémoire : MEMOIRE en Mo, 2048 par défaut)
 #   reseau-essai.sh ecran NOM       capture d'écran du poste (PNG)
 #   reseau-essai.sh touches NOM T…  envoyer des touches au poste (noms QEMU : ret, down…)
 #   reseau-essai.sh arreter NOM     arrêter un poste
@@ -178,7 +179,7 @@ poste() {
     esac
 
     # shellcheck disable=SC2086
-    qemu-system-x86_64 $micro -m 2048 -smp 2 \
+    qemu-system-x86_64 $micro -m "${MEMOIRE:-2048}" -smp 2 \
         -netdev tap,id=n0,ifname="$tap",script=no,downscript=no \
         -device virtio-net-pci,netdev=n0,mac="$mac",bootindex=1 \
         -drive "$disque",if=none,id=d0 -device virtio-blk-pci,drive=d0,bootindex=2 \

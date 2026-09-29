@@ -113,9 +113,12 @@ class _Script:
         return items
 
     def demarrer(self, image: images.Image) -> list[str]:
-        url = self.url(image.chemin)
-        if image.type == images.WIM:
-            return [f"kernel {self.http}/wimboot/wimboot", f"initrd {url} boot.wim", "boot"]
+        url = f"{self.http}/{image.wim}" if image.wim else self.url(image.chemin)
+        if image.type == images.WIM or image.wim:
+            # wimboot doit voir le fichier sous le nom qu'attendent les BCD. En UEFI,
+            # iPXE le tire de --name ; en BIOS, certaines versions (celle de QEMU,
+            # 1.21) le tirent du dernier argument : il est donné des deux façons.
+            return [f"kernel {self.http}/wimboot/wimboot", f"initrd --name boot.wim {url} boot.wim", "boot"]
         if image.type == images.EFI:
             return [f"chain {url}"]
         return [f"sanboot --no-describe {url}"]

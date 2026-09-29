@@ -88,7 +88,7 @@ class MenuImages(unittest.TestCase):
         script = menu.script_menu(config.Reglages(), HTTP, inventaire=self.inventaire())
         self.assertIn(f"sanboot --no-describe {HTTP}/images/mon%20outil.iso || goto echec", script)
         self.assertIn(f"kernel {HTTP}/wimboot/wimboot || goto echec\n"
-                      f"initrd {HTTP}/images/winpe.wim boot.wim || goto echec\n"
+                      f"initrd --name boot.wim {HTTP}/images/winpe.wim boot.wim || goto echec\n"
                       "boot || goto echec", script)
         self.assertIn(f"chain {HTTP}/images/shell.efi", script)
         self.assertIn("iseq ${platform} efi && item", script)
@@ -134,3 +134,18 @@ class Marques(unittest.TestCase):
         self.assertIn("alpine (ISO) - no network boot\n", script)
         self.assertIn("debian (ISO) - no network boot\n", script)
         self.assertIn("outil (ISO)\n", script)
+
+
+class IsoWindows(unittest.TestCase):
+    def test_iso_windows_demarre_son_boot_wim_extrait(self):
+        dossier = images.Dossier("", "", images=[
+            images.Image("W/hbcd.iso", "hbcd", images.ISO, wim="windows/abc.wim")])
+        script = menu.script_menu(config.Reglages(), HTTP, inventaire=dossier)
+        self.assertIn("item i1 hbcd (ISO)", script)
+        self.assertIn(f"initrd --name boot.wim {HTTP}/windows/abc.wim boot.wim || goto echec", script)
+        self.assertNotIn("sanboot", script.split(":disque")[0] + script.split(":i1")[1])
+
+    def test_nom_d_extraction_suit_le_fichier(self):
+        from gatorpxe import windows
+        self.assertEqual(windows.nom("a.iso", (1, 2)), windows.nom("a.iso", (1, 2)))
+        self.assertNotEqual(windows.nom("a.iso", (1, 2)), windows.nom("a.iso", (1, 3)))

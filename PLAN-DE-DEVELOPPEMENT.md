@@ -1,6 +1,6 @@
 # GatorPXE — Plan de développement
 
-Compagnon de [ANALYSE-FONCTIONNELLE.md](ANALYSE-FONCTIONNELLE.md), révision 0.7.
+Compagnon de [ANALYSE-FONCTIONNELLE.md](ANALYSE-FONCTIONNELLE.md), révision 0.8.
 Les renvois `§n` pointent vers l'analyse.
 
 | Rév. | Date | Auteur | Changement |
@@ -13,6 +13,7 @@ Les renvois `§n` pointent vers l'analyse.
 | 0.6 | 2026-09-28 | Kevin + Claude | Phase 2 faite, en attente de revue : CloneGator publie `clonegator-live-pxe.tar` (sa révision 1.6), GatorPXE le sert. Analyse 0.5 |
 | 0.7 | 2026-09-28 | Claude | Phase 3 commencée sans les images Windows, qui viendront de Kevin. Analyse 0.6 |
 | 0.8 | 2026-09-28 | Kevin + Claude | Analyse 0.7 : examen des ISO par 7zip et marques au menu (module `examen`) |
+| 0.9 | 2026-09-29 | Claude | Phase 3 : ISO Windows et WIM essayés avec Hiren's BootCD PE ; phase 4 commencée. Analyse 0.8 |
 
 ---
 
@@ -84,7 +85,7 @@ gatorpxe/
                    dernière version gardée hors ligne
   images.py        inventaire du dossier : type, nom affiché, sous-dossiers, fichiers ignorés
   examen.py        ce qu'une ISO laisse prévoir : famille Linux, chargeur UEFI signé ou non
-  windows.py       extraction des ISO Windows par 7zip, une fois, dans /var/lib/gatorpxe
+  windows.py       extraction du boot.wim des ISO Windows par 7zip, une fois, dans /var/lib/gatorpxe
   renvois.py       WDS, iPXE/HTTP, PXE générique (§8)
   menu.py          le script iPXE du menu, à partir de l'inventaire et des réglages
   postes.py        derniers postes démarrés, lus dans les journaux de dnsmasq et lighttpd
@@ -240,7 +241,13 @@ retenue seulement une fois stable ; wimboot 2.9.0 téléchargé (signé par l'au
 Microsoft) ; menu des ISO (sanboot), WIM (wimboot) et EFI (entrée masquée en BIOS) ; un
 démarrage qui échoue ramène au menu. Résultat des ISO Linux : analyse §6 ; les ISO sont
 examinées par 7zip (quelques millisecondes, même pour 4 Go) et marquées au menu, ce qui retrouve
-exactement les résultats des essais. Restent l'ISO Windows 11 et le WIM, que Kevin fournit.
+exactement les résultats des essais.
+
+**Windows (2026-09-29)**, avec Hiren's BootCD PE (Windows 11 PE, 3,3 Go) fourni par Kevin : son
+`boot.wim` (1,9 Go), déposé comme WIM, démarre jusqu'au bureau en UEFI Secure Boot ; l'ISO
+déposée telle quelle est examinée, son `boot.wim` extrait en arrière-plan (moins d'une seconde),
+puis elle paraît au menu et démarre jusqu'au bureau en BIOS et en UEFI Secure Boot. Reste une
+ISO d'installation de Windows 11.
 
 Enseignements :
 
@@ -250,8 +257,16 @@ Enseignements :
   bougé depuis 10 s : sinon, une ISO en cours de copie entrait au menu puis en sortait.
 - sanboot ne charge pas l'ISO en mémoire : il la lit à la demande, et le disque disparaît quand
   le système démarré prend la main.
+- Un `boot.wim` suffit à wimboot : il y trouve `bootmgfw.efi`, le BCD et `boot.sdi`. Mais le
+  fichier doit s'appeler `boot.wim`, nom qu'attend ce BCD : sinon, erreur 0xc000000f. En UEFI,
+  iPXE tire ce nom de `--name` ; en BIOS, l'iPXE 1.21 de QEMU le tire du dernier argument de
+  `initrd`. Le menu donne les deux.
+- wimboot charge le WIM entier en mémoire : 1,9 Go pour Hiren's ; un poste de 2 Go ne suffit pas.
+- Le chargeur UEFI d'une ISO Windows est signé par l'autorité Windows de Microsoft, pas par son
+  autorité UEFI ; il ne sert pas, puisque l'ISO démarre par wimboot : pas de marque « sans Secure
+  Boot » pour une ISO Windows.
 
-### Phase 4 — Les renvois · taille M
+### Phase 4 — Les renvois · taille M · **en cours**
 
 - `renvois` : WDS (fichiers connus, BIOS et UEFI), iPXE/HTTP, PXE générique
 - dans l'ordre choisi, après les images
@@ -261,6 +276,20 @@ réseau d'essai. **WDS demande un vrai serveur WDS** : la manière de l'essayer 
 de production reste à décider avec Kevin, en BIOS et en UEFI Secure Boot (§16).
 
 **Fini quand** : chaque type de renvoi mène un poste au menu de l'autre serveur.
+
+**Où on en est (2026-09-29).** Les renvois se règlent dans `gatorpxe.json` (l'interface viendra
+en phase 5) et paraissent au menu après les images. `reseau-essai.sh autre` monte un second
+serveur PXE en .3 (pxelinux en BIOS, GRUB signé d'Ubuntu en UEFI). iPXE/HTTP vers netboot.xyz :
+son menu s'ouvre en BIOS et en UEFI Secure Boot. PXE générique : pxelinux atteint son menu en
+BIOS. En UEFI, GRUB est chargé et connaît son serveur, mais n'y lit pas sa configuration ; point
+ouvert. WDS : à essayer.
+
+Enseignements :
+
+- Le programme chargé lit son serveur dans la réponse DHCP que lui présente iPXE. `set
+  next-server` ne suffit pas : la réponse du proxy de GatorPXE l'emporte, et iPXE la construit à
+  partir des réglages de la carte. Le menu corrige `netX/next-server`, `proxydhcp/next-server` et
+  `pxebs/next-server`.
 
 ### Phase 5 — L'interface · taille L
 

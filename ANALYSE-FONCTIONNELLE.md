@@ -15,6 +15,7 @@ seul.
 | 0.5 | 2026-09-28 | Kevin + Claude | CloneGator publie son démarrage réseau avec chaque release, shim de Debian compris ; GatorPXE le prend là (§7) |
 | 0.6 | 2026-09-28 | Claude | Essais des ISO en sanboot : l'ISO n'est pas chargée en mémoire, et les ISO Linux courantes ne retrouvent pas leur support (§6, §16) |
 | 0.7 | 2026-09-28 | Kevin + Claude | Sanboot gardé en première version ; les ISO sont examinées et marquées au menu, « incompatible réseau » et « sans Secure Boot » (§6) |
+| 0.8 | 2026-09-29 | Claude | Essais Windows (Hiren's BootCD PE) et renvois : un `boot.wim` suffit à wimboot ; résultats des renvois, GRUB en UEFI en point ouvert (§6, §8, §16) |
 
 ---
 
@@ -138,8 +139,8 @@ le retire du menu. Les fichiers non reconnus sont ignorés, et signalés dans l'
 
 | Format | Démarrage | Fiabilité |
 |--------|-----------|-----------|
-| **WIM** (Windows PE, outils Windows) | par wimboot | très bonne, Secure Boot compris |
-| **ISO Windows** (installation, WinPE) | GatorPXE en extrait `boot.wim` et les fichiers de démarrage, une fois, puis wimboot | très bonne |
+| **WIM** (Windows PE, outils Windows) | par wimboot, qui trouve dans le WIM le gestionnaire de démarrage et ses fichiers | très bonne, Secure Boot compris |
+| **ISO Windows** (installation, WinPE) | GatorPXE en extrait `sources/boot.wim`, une fois, en arrière-plan, puis wimboot ; l'ISO paraît au menu une fois l'extraction faite | très bonne pour un Windows PE (Hiren's BootCD PE, BIOS et UEFI Secure Boot) ; installation de Windows à essayer |
 | **ISO quelconque** (Linux, outils divers) | iPXE présente l'ISO au poste comme un disque, lu par morceaux à la demande (sanboot) | faible pour les Linux : le chargeur et le noyau démarrent, puis le système cherche son ISO et ne la trouve plus ; bonne pour les outils autonomes (netboot.xyz…) |
 | **EFI** (`.efi`) | chargé directement | bonne, s'il est signé quand Secure Boot est actif |
 
@@ -195,7 +196,13 @@ l'interface : **nom** affiché au menu, **type**, **adresse**.
 | **PXE générique** | tout autre serveur (pxelinux, GRUB…) | l'adresse du serveur, et le fichier à charger en BIOS et en UEFI |
 
 Avec Secure Boot actif, un renvoi ne marche que si l'autre serveur fournit, lui aussi, des
-fichiers signés.
+fichiers signés par Microsoft (c'est le cas des fichiers de WDS).
+
+Le programme chargé depuis l'autre serveur y trouve la suite de ses fichiers : iPXE lui annonce
+cet autre serveur comme le sien. Essais sur le réseau d'essai : iPXE/HTTP vers netboot.xyz, en
+BIOS et en UEFI Secure Boot ; PXE générique vers pxelinux, en BIOS. En UEFI, un GRUB chargé par
+renvoi connaît bien son serveur mais n'y lit pas sa configuration : point ouvert, à revoir avec
+le renvoi vers WDS (§16).
 
 ---
 
@@ -312,5 +319,8 @@ fait revoir la section concernée.
 - Le renvoi vers WDS, en BIOS et en UEFI, avec Secure Boot actif.
 - ~~Le DHCP réglé à la main avec l'iPXE signé~~ : fait sur le réseau d'essai (§9).
 - ~~Les ISO Linux courantes en sanboot~~ : faites, résultats au §6.
-- L'extraction des ISO Windows récentes (Windows 11) et leur démarrage par wimboot.
+- ~~L'extraction des ISO Windows et leur démarrage par wimboot~~ : fait avec Hiren's BootCD PE
+  (Windows 11 PE). Reste une ISO d'installation de Windows 11, dont l'installeur cherchera
+  peut-être son image d'installation sur le support.
+- Un GRUB chargé par renvoi en UEFI (§8).
 - Le proxy DHCP à côté des DHCP courants : Windows Server, pfSense, routeurs grand public.

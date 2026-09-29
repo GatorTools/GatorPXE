@@ -31,6 +31,7 @@ REPOS = 10
 NON_RECONNU = "format non reconnu"
 ILLISIBLE = "illisible par le serveur web : droits de lecture manquants"
 EN_COPIE = "en cours de copie"
+EN_PREPARATION = "ISO Windows en préparation"
 
 
 @dataclass
@@ -41,6 +42,7 @@ class Image:
     # Ce que l'examen d'une ISO laisse prévoir (module examen), rempli par le service.
     reseau: bool = True  # False : ne démarrera pas par le réseau
     secure_boot: bool = True  # False : refusée par Secure Boot
+    wim: str = ""  # ISO Windows : son boot.wim extrait, relatif à la racine HTTP
 
 
 @dataclass

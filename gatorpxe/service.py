@@ -16,7 +16,8 @@ import threading
 import time
 from typing import Callable
 
-from . import chemins, config, dnsmasq, examen, images, journal, langue, lighttpd, menu, reseau, sysexec, telechargements
+from . import (chemins, config, dnsmasq, examen, images, journal, langue, lighttpd, menu, reseau,
+               sysexec, telechargements, windows)
 
 _log = logging.getLogger("gatorpxe.service")
 
@@ -66,6 +67,7 @@ class Service:
         self.inventaire = images.Inventaire(None)
         self.empreintes: dict[str, tuple[int, int]] | None = None
         self.examens: dict[str, tuple[tuple[int, int], examen.Examen]] = {}
+        self.extraction: threading.Thread | None = None
 
     def tourner(self) -> None:
         signal.signal(signal.SIGHUP, lambda *_: setattr(self, "a_relire", True))
@@ -161,7 +163,10 @@ class Service:
         avant = self.inventaire
         self.inventaire = images.inventaire(dossier, self.empreintes)
         self.empreintes = self.inventaire.empreintes
-        self.examiner(dossier, self.inventaire.racine)
+        gardes: set[str] = set()
+        self.examiner(dossier, self.inventaire.racine, gardes)
+        if not (self.extraction and self.extraction.is_alive()) and self.inventaire.racine is not None:
+            windows.menage(gardes)
         if self.inventaire.racine is None and avant.racine is not None:
             _log.warning("dossier d'images introuvable : %s", dossier)
         elif self.inventaire.racine is not None and avant.racine is None:
@@ -175,14 +180,17 @@ class Service:
         for chemin, raison in sorted(ecartes - {(e.chemin, e.raison) for e in avant.ecartes}):
             _log.info("fichier écarté : %s (%s)", chemin, raison)
 
-    def examiner(self, racine: str, dossier: images.Dossier | None) -> None:
+    def examiner(self, racine: str, dossier: images.Dossier | None, gardes: set[str]) -> None:
         """Les marques des ISO : un examen par fichier, gardé tant que le
-        fichier ne change pas."""
+        fichier ne change pas. Une ISO Windows ne paraît au menu qu'une fois
+        son boot.wim extrait, en arrière-plan, une ISO à la fois."""
         if dossier is None:
             return
         for sous in dossier.dossiers:
-            self.examiner(racine, sous)
+            self.examiner(racine, sous, gardes)
+        prets = []
         for image in dossier.images:
+            prets.append(image)
             if image.type != images.ISO:
                 continue
             empreinte = self.empreintes[image.chemin]
@@ -192,7 +200,22 @@ class Service:
                 self.examens[image.chemin] = memoire
             resultat = memoire[1]
             image.reseau = resultat.famille is None
-            image.secure_boot = resultat.signe is not False
+            # Une ISO Windows démarre par wimboot, signé : son propre chargeur ne sert pas.
+            image.secure_boot = resultat.signe is not False or bool(resultat.wim)
+            if resultat.wim:
+                nom_wim = windows.nom(image.chemin, empreinte)
+                gardes.add(nom_wim)
+                if windows.extrait(nom_wim):
+                    image.wim = f"windows/{nom_wim}"
+                    continue
+                prets.pop()
+                self.inventaire.ecartes.append(images.Ecarte(image.chemin, images.EN_PREPARATION))
+                if not (self.extraction and self.extraction.is_alive()):
+                    self.extraction = threading.Thread(
+                        target=windows.extraire, name="windows", daemon=True,
+                        args=(os.path.join(racine, image.chemin), resultat.wim, nom_wim))
+                    self.extraction.start()
+        dossier.images = prets
 
     def preparer(self, chargeurs: str, adresse_http: str) -> None:
         """Les fichiers servis : chargeurs iPXE et relais en TFTP ; menu et
@@ -208,6 +231,10 @@ class Service:
         # CloneGator et wimboot sont servis par un lien vers leur version en service.
         present = _lier("clonegator", telechargements.CLONEGATOR)
         _lier("wimboot", telechargements.WIMBOOT)
+        lien = os.path.join(chemins.HTTP, "windows")
+        if not os.path.islink(lien):
+            os.makedirs(chemins.WINDOWS, mode=0o755, exist_ok=True)
+            os.symlink(chemins.WINDOWS, lien)
         if chemins.ecrire_si_change(os.path.join(chemins.HTTP, "menu.ipxe"),
                                     menu.script_menu(self.reglages, adresse_http, present,
                                                      self.inventaire.racine)):

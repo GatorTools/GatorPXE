@@ -7,6 +7,8 @@ pour une ISO de plusieurs gigaoctets) et en extrait au besoin le chargeur UEFI.
     support après le démarrage : en sanboot, il ne le retrouve pas.
   - Un chargeur UEFI qui n'est pas signé par l'autorité UEFI de Microsoft sera
     refusé par Secure Boot.
+  - Une ISO Windows porte `sources/boot.wim` : c'est lui qu'on démarre, par
+    wimboot, une fois extrait (module windows).
 
 La détection repère des familles connues ; elle ne garantit rien. Faute
 d'indice, une ISO est présentée sans marque.
@@ -45,7 +47,7 @@ AUTORITES_MICROSOFT = (b"Microsoft Corporation UEFI CA 2011", b"Microsoft UEFI C
 class Examen:
     famille: str | None = None  # famille Linux qui ne démarrera pas en sanboot
     signe: bool | None = None  # chargeur UEFI signé par Microsoft ; None : inconnu
-    windows: bool = False
+    wim: str | None = None  # ISO Windows : le chemin de sources/boot.wim dans l'ISO
 
 
 def famille(chemins: list[str]) -> str | None:
@@ -83,7 +85,7 @@ def examiner(iso: str) -> Examen:
         return Examen()
     chemins = [ligne[7:] for ligne in liste.sortie.splitlines() if ligne.startswith("Path = ")]
     examen = Examen(famille=famille(chemins),
-                    windows=any(c.replace("\\", "/").lower() == WINDOWS for c in chemins))
+                    wim=next((c for c in chemins if c.replace("\\", "/").lower() == WINDOWS), None))
 
     chargeur = next((c for c in chemins if c.replace("\\", "/").lower() == CHARGEUR_UEFI), None)
     if chargeur:
