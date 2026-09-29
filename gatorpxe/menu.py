@@ -28,8 +28,9 @@ def ascii(texte: str) -> str:
 
 
 class _Script:
-    def __init__(self, adresse_http: str):
+    def __init__(self, adresse_http: str, ipxe: str = ""):
         self.http = adresse_http
+        self.ipxe = ipxe  # la version d'iPXE en service
         self.menus: list[list[str]] = []  # un bloc par menu
         self.actions: list[list[str]] = []  # un bloc par entrée à démarrer
         self.numero = 0
@@ -87,7 +88,10 @@ class _Script:
                 self.actions.append([f":{etiquette}", *_ou_echec([f"chain {renvoi.adresse}"])])
                 continue
             bios, uefi = renvoi.fichiers()
-            if bios and uefi:
+            if renvoi.type == config.WDS and self.ipxe in config.IPXE_SANS_WDS_UEFI:
+                marque = _marque(texte, [t("pas en UEFI pour l'instant")])
+                items.append(f"iseq ${{platform}} efi && item {etiquette} {marque} || item {etiquette} {texte}")
+            elif bios and uefi:
                 items.append(f"item {etiquette} {texte}")
             elif uefi or bios:
                 # Un seul fichier donné : l'entrée ne paraît que là où il sert.
@@ -125,11 +129,12 @@ class _Script:
 
 
 def script_menu(reglages: config.Reglages, adresse_http: str, clonegator: bool = False,
-                inventaire: images.Dossier | None = None) -> str:
+                inventaire: images.Dossier | None = None, ipxe: str = "") -> str:
     """`adresse_http` : le serveur, `http://…:8069` ; `clonegator` : les
     fichiers de démarrage réseau de CloneGator sont là ; `inventaire` : le
-    dossier d'images, None s'il est introuvable."""
-    script = _Script(adresse_http)
+    dossier d'images, None s'il est introuvable ; `ipxe` : la version d'iPXE
+    en service."""
+    script = _Script(adresse_http, ipxe)
     avec_clonegator = clonegator and reglages.clonegator
 
     principal = [f":{PRINCIPAL}", "menu GatorPXE"]

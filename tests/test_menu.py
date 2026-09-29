@@ -117,3 +117,18 @@ class EntreeParDefaut(unittest.TestCase):
         self.assertIn("choose --default clonegator", menu.script_menu(reglages, HTTP, clonegator=True))
         # Pas encore téléchargé : le disque local.
         self.assertIn("choose --default disque", menu.script_menu(reglages, HTTP, clonegator=False))
+
+
+class WdsEnUefi(unittest.TestCase):
+    def script(self, ipxe):
+        reglages = config.Reglages(renvois=[config.Renvoi("WDS", config.WDS, "10.0.0.5")])
+        return menu.script_menu(reglages, HTTP, ipxe=ipxe)
+
+    def test_marque_en_uefi_avec_ipxe_2_0_0(self):
+        self.assertIn("iseq ${platform} efi && item r1 WDS - not in UEFI for now || item r1 WDS\n",
+                      self.script("v2.0.0"))
+
+    def test_sans_marque_avec_une_autre_version(self):
+        script = self.script("v2.0.1")
+        self.assertIn("item r1 WDS\n", script)
+        self.assertNotIn("UEFI for now", script)

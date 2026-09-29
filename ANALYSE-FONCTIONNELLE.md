@@ -19,6 +19,7 @@ seul.
 | 0.9 | 2026-09-29 | Claude | Interface : la langue vaut aussi pour le menu des postes ; entrée par défaut, disque local ou CloneGator ; état du service et derniers postes (§11) |
 | 0.10 | 2026-09-29 | Claude | Paquet : Python 3.11 ou plus, `iproute2` et `ca-certificates` en dépendances (§14) |
 | 0.11 | 2026-09-29 | Kevin + Claude | Renvoi WDS en UEFI : limite d'iPXE 2.0.0, en attente de son correctif (§8) |
+| 0.12 | 2026-09-29 | Kevin + Claude | Renvoi WDS marqué « pas en UEFI pour l'instant » au menu des postes UEFI, tant qu'iPXE 2.0.0 est en service (§8) |
 
 ---
 
@@ -213,7 +214,9 @@ réseau sur son propre appareil, où iPXE ne la met plus. Le correctif proposé 
 pas ; son mainteneur en prépare un autre, sans date. Avec un iPXE d'avant la régression, compilé
 pour l'essai, le même renvoi fonctionne tel que GatorPXE le règle : le service tenant iPXE à
 jour chaque jour, une release corrigée sera prise d'elle-même, sans rien changer à GatorPXE. En
-BIOS, `wdsnbp.com` n'est pas concerné.
+BIOS, `wdsnbp.com` n'est pas concerné. D'ici là, en UEFI, le menu marque l'entrée d'un renvoi
+WDS « pas en UEFI pour l'instant » ; la marque ne dépend que de la version d'iPXE en service
+(2.0.0) et part d'elle-même avec une version corrigée.
 
 ---
 

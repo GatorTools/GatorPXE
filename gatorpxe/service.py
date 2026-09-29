@@ -268,7 +268,8 @@ class Service:
             os.symlink(chemins.WINDOWS, lien)
         if chemins.ecrire_si_change(os.path.join(chemins.HTTP, "menu.ipxe"),
                                     menu.script_menu(self.reglages, adresse_http, present,
-                                                     self.inventaire.racine)):
+                                                     self.inventaire.racine,
+                                                     telechargements.IPXE.version() or "")):
             _log.info("menu reconstruit")
 
 

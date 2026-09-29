@@ -240,8 +240,11 @@ class Application:
                 ligne.morceaux.append((f"   {image['chemin']}", DETAIL))
                 lignes.append(ligne)
             for renvoi in self.reglages.renvois:
-                lignes.append(Ligne([(f"  {renvoi.nom}", FORT),
-                                     (f"   {type_renvoi(renvoi.type)}, {renvoi.adresse}", DETAIL)]))
+                ligne = Ligne([(f"  {renvoi.nom}", FORT)])
+                if renvoi.type == config.WDS and vu.get("ipxe") in config.IPXE_SANS_WDS_UEFI:
+                    ligne.morceaux.append(("   " + t("pas en UEFI pour l'instant"), AVERTISSEMENT))
+                ligne.morceaux.append((f"   {type_renvoi(renvoi.type)}, {renvoi.adresse}", DETAIL))
+                lignes.append(ligne)
             lignes.append(Ligne.de(f"  {t('Démarrer sur le disque local')}", FORT))
             if vu.get("dossier_introuvable"):
                 lignes += [Ligne.de(""), Ligne.de(t("Dossier d'images introuvable : {dossier}",

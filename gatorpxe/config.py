@@ -29,6 +29,11 @@ TYPES_RENVOI = (WDS, IPXE, PXE)
 WDS_BIOS = "boot\\x64\\wdsnbp.com"
 WDS_UEFI = "boot\\x64\\wdsmgfw.efi"
 
+# Les versions d'iPXE avec lesquelles le renvoi WDS échoue en UEFI : wdsmgfw.efi
+# n'y trouve pas son serveur (« Server IP: 0.0.0.0 », ticket iPXE n° 1716).
+# Le menu le signale ; la marque part d'elle-même avec une version corrigée.
+IPXE_SANS_WDS_UEFI = {"v2.0.0"}
+
 
 @dataclass
 class Renvoi:

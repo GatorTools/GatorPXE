@@ -16,6 +16,7 @@ ANGLAIS: dict[str, str] = {
     "Appuyez sur une touche pour revenir au menu.": "Press a key to return to the menu.",
     "incompatible réseau": "no network boot",
     "sans Secure Boot": "no Secure Boot",
+    "pas en UEFI pour l'instant": "not in UEFI for now",
 
     # ---------------------------------------------------------------- touches
     "Choisir": "Select",
