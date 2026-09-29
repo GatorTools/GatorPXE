@@ -64,11 +64,13 @@ def analyser(reponse: bytes) -> tuple[str, Demarrage | None]:
         longueur = reponse[i + 1]
         options[reponse[i]] = reponse[i + 2:i + 2 + longueur]
         i += 2 + longueur
+    fichier = options.get(67, b"").split(b"\0")[0].decode(errors="replace") or fichier_bootp
+    # Sans fichier de démarrage, rien n'est annoncé : beaucoup de serveurs DHCP
+    # mettent de toute façon leur propre adresse dans « next-server ».
+    if not fichier:
+        return xid, None
     serveur = options.get(66, b"").split(b"\0")[0].decode(errors="replace") or (
         siaddr if siaddr != "0.0.0.0" else "")
-    fichier = options.get(67, b"").split(b"\0")[0].decode(errors="replace") or fichier_bootp
-    if not serveur and not fichier:
-        return xid, None
     return xid, Demarrage(serveur, fichier)
 
 

@@ -27,6 +27,10 @@ class Analyse(unittest.TestCase):
     def test_rien_d_annonce(self):
         self.assertIsNone(detection.analyser(reponse())[1])
 
+    def test_next_server_seul_n_annonce_rien(self):
+        # dnsmasq, entre autres, met toujours sa propre adresse dans « next-server ».
+        self.assertIsNone(detection.analyser(reponse(siaddr="10.0.0.2"))[1])
+
     def test_paquet_inform(self):
         paquet = detection.paquet_inform("10.0.0.9", bytes.fromhex("525400aabbcc"), b"\x09\x09\x09\x09")
         self.assertEqual(paquet[12:16], socket.inet_aton("10.0.0.9"))  # ciaddr
