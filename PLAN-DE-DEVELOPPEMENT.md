@@ -1,6 +1,6 @@
 # GatorPXE — Plan de développement
 
-Compagnon de [ANALYSE-FONCTIONNELLE.md](ANALYSE-FONCTIONNELLE.md), révision 0.8.
+Compagnon de [ANALYSE-FONCTIONNELLE.md](ANALYSE-FONCTIONNELLE.md), révision 0.9.
 Les renvois `§n` pointent vers l'analyse.
 
 | Rév. | Date | Auteur | Changement |
@@ -15,6 +15,7 @@ Les renvois `§n` pointent vers l'analyse.
 | 0.8 | 2026-09-28 | Kevin + Claude | Analyse 0.7 : examen des ISO par 7zip et marques au menu (module `examen`) |
 | 0.9 | 2026-09-29 | Claude | Phase 3 : ISO Windows et WIM essayés avec Hiren's BootCD PE ; phase 4 commencée. Analyse 0.8 |
 | 0.10 | 2026-09-29 | Kevin + Claude | Le WDS de production n'est pas joignable depuis le segment de la station : l'essai du renvoi WDS passe à la recette (phase 6), sur un segment où il répond |
+| 0.11 | 2026-09-29 | Claude | Phase 5 faite, en attente de la revue de Kevin. Analyse 0.9 |
 
 ---
 
@@ -89,7 +90,8 @@ gatorpxe/
   windows.py       extraction du boot.wim des ISO Windows par 7zip, une fois, dans /var/lib/gatorpxe
   renvois.py       WDS, iPXE/HTTP, PXE générique (§8)
   menu.py          le script iPXE du menu, à partir de l'inventaire et des réglages
-  postes.py        derniers postes démarrés, lus dans les journaux de dnsmasq et lighttpd
+  etat.py          ce que voit le service, écrit à chaque tour pour l'interface
+  postes.py        derniers postes démarrés, lus dans le journal de lighttpd
   ui/
     model.py       état affiché, sans curses — testable seul
     screens.py     rendu curses (§11)
@@ -294,7 +296,7 @@ Enseignements :
   partir des réglages de la carte. Le menu corrige `netX/next-server`, `proxydhcp/next-server` et
   `pxebs/next-server`.
 
-### Phase 5 — L'interface · taille L
+### Phase 5 — L'interface · taille L · **faite, en attente de revue**
 
 - reprise de la présentation, des touches et de `F2` de CloneGator
 - l'accueil (§11) : service, proxy, menu tel que les postes le voient, fichiers ignorés, derniers
@@ -305,6 +307,24 @@ Enseignements :
 
 **Fini quand** : tout se règle depuis l'interface sans ouvrir un fichier (P5), revue de Kevin sur
 la console de la station.
+
+**Où on en est (2026-09-29).** `sudo gatorpxe` ouvre l'écran d'accueil au logo, puis l'état :
+service, réseau, menu, fichiers écartés, pare-feu, trois derniers postes ; il se met à jour
+toutes les deux secondes. Écrans : menu de démarrage tel que les postes le voient (marques et
+fichiers écartés compris), derniers postes, réseau et DHCP (proxy, carte, réglages à saisir dans
+un DHCP), dossier des images, CloneGator, renvois (ajouter, modifier, monter, descendre, retirer),
+délai et entrée par défaut. Chaque réglage est écrit puis relu par le service (`systemctl
+reload`). Essayé dans un terminal de 120 colonnes, en anglais et en français ; un poste qui
+choisit une image paraît dans les derniers postes avec son choix.
+
+Enseignements :
+
+- Le cadre de CloneGator avalait en silence une erreur de reconstruction d'écran en
+  arrière-plan : elle est désormais journalisée dans `interface.log`.
+- L'interface adopte la langue du système pour les accents ; `strptime` suit alors cette langue
+  et ne lit plus « Sep » dans le journal de lighttpd : les mois sont lus sans lui.
+- Le contenu tient dans 110 colonnes : les explications trop longues étaient coupées ; elles ont
+  été raccourcies.
 
 ### Phase 6 — Paquet et recette · taille M
 

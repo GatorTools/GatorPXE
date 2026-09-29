@@ -1,16 +1,15 @@
-"""Point d'entrée : `gatorpxe` ouvrira l'interface (§11 de l'analyse),
-`gatorpxe service` fera tourner le service (§3).
-
-L'interface viendra en phase 5 ; d'ici là, `gatorpxe` affiche la version.
+"""Point d'entrée : `gatorpxe` ouvre l'interface (§11 de l'analyse),
+`gatorpxe service` fait tourner le service (§3).
 """
 
 from __future__ import annotations
 
 import argparse
+import logging
 import os
 import sys
 
-from . import VERSION, config, langue, service
+from . import VERSION, config, journal, langue, service
 from .langue import t
 
 
@@ -36,7 +35,14 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     if args.commande:
         return args.fonction(args)
-    return cmd_version(args)
+    # Rien sur l'écran de curses : les avertissements de l'interface vont dans un fichier.
+    os.makedirs(journal.RACINE, exist_ok=True)
+    fichier = logging.FileHandler(os.path.join(journal.RACINE, "interface.log"), encoding="utf-8")
+    fichier.setLevel(logging.WARNING)
+    fichier.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s : %(message)s"))
+    logging.getLogger().addHandler(fichier)
+    from .ui import app
+    return app.demarrer()
 
 
 if __name__ == "__main__":

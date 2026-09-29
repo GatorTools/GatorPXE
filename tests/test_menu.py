@@ -46,7 +46,8 @@ class Menu(unittest.TestCase):
 
     def test_relais(self):
         self.assertEqual(menu.script_relais("http://192.168.199.1:8069"),
-                         "#!ipxe\nchain http://192.168.199.1:8069/menu.ipxe\n")
+                         "#!ipxe\nchain http://192.168.199.1:8069/menu.ipxe"
+                         "?mac=${mac:hexhyp}&plateforme=${platform}\n")
 
 
 class Dnsmasq(unittest.TestCase):
@@ -108,3 +109,11 @@ class Renvois(unittest.TestCase):
                 ]}, f)
             with mock.patch.object(config, "FICHIER", fichier):
                 self.assertEqual([r.nom for r in config.lire().renvois], ["W"])
+
+
+class EntreeParDefaut(unittest.TestCase):
+    def test_clonegator_par_defaut_s_il_est_au_menu(self):
+        reglages = config.Reglages(entree_defaut=config.CLONEGATOR)
+        self.assertIn("choose --default clonegator", menu.script_menu(reglages, HTTP, clonegator=True))
+        # Pas encore téléchargé : le disque local.
+        self.assertIn("choose --default disque", menu.script_menu(reglages, HTTP, clonegator=False))

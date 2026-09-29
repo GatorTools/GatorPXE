@@ -16,7 +16,7 @@ import threading
 import time
 from typing import Callable
 
-from . import (chemins, config, dnsmasq, examen, images, journal, langue, lighttpd, menu, reseau,
+from . import (VERSION, chemins, config, dnsmasq, etat, examen, images, journal, langue, lighttpd, menu, reseau,
                sysexec, telechargements, windows)
 
 _log = logging.getLogger("gatorpxe.service")
@@ -107,17 +107,18 @@ class Service:
         adresse = reseau.adresse(carte) if carte else None
         attente = ""
         if not carte:
-            attente = "aucune carte réseau principale"
+            attente = etat.SANS_CARTE
         elif not adresse:
-            attente = f"la carte {carte} n'a pas d'adresse IPv4"
+            attente = etat.SANS_ADRESSE
         elif not chargeurs:
-            attente = "iPXE pas encore obtenu"
+            attente = etat.SANS_IPXE
         if attente:
             if attente != self.attente_signalee:
-                _log.warning("en attente : %s ; les postes ne sont pas servis", attente)
+                _log.warning("en attente (%s, carte %s) : les postes ne sont pas servis", attente, carte)
                 self.attente_signalee = attente
             self.dnsmasq.arreter()
             self.lighttpd.arreter()
+            self.publier(carte, adresse, attente)
             return
         if self.attente_signalee:
             _log.info("fin de l'attente : carte %s, adresse %s", carte, adresse)
@@ -135,6 +136,36 @@ class Service:
                              os.path.join(journal.RACINE, "dnsmasq.log")),
             dnsmasq.commande,
         )
+        self.publier(carte, adresse, "")
+
+    def publier(self, carte, adresse, attente: str) -> None:
+        """L'état pour l'interface (module etat)."""
+        def vivant(instance: Instance) -> bool:
+            return bool(instance.programme and instance.programme.vivant())
+
+        def liste(dossier: images.Dossier | None) -> list[dict]:
+            if dossier is None:
+                return []
+            return [{"chemin": i.chemin, "nom": i.nom, "type": i.type, "reseau": i.reseau,
+                     "secure_boot": i.secure_boot} for i in dossier.images] + [
+                x for d in dossier.dossiers for x in liste(d)]
+
+        etat.ecrire({
+            "version": VERSION,
+            "carte": carte or "",
+            "adresse": str(adresse.ip) if adresse else "",
+            "attente": attente,
+            "proxy_dhcp": self.reglages.proxy_dhcp,
+            "dnsmasq": vivant(self.dnsmasq),
+            "lighttpd": vivant(self.lighttpd),
+            "ipxe": telechargements.IPXE.version() or "",
+            "clonegator": telechargements.CLONEGATOR.version() or "",
+            "dossier_images": self.reglages.dossier_images,
+            "dossier_introuvable": self.inventaire.racine is None,
+            "images": liste(self.inventaire.racine),
+            "ecartes": [{"chemin": e.chemin, "raison": e.raison} for e in self.inventaire.ecartes],
+            "windows": {f"windows/{windows.nom(c, m[0])}": c for c, m in self.examens.items() if m[1].wim},
+        })
 
     def suivre_clonegator(self) -> None:
         """CloneGator, une fois par jour, en arrière-plan : ses 250 Mo

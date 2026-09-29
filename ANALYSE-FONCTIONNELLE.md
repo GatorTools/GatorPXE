@@ -16,6 +16,7 @@ seul.
 | 0.6 | 2026-09-28 | Claude | Essais des ISO en sanboot : l'ISO n'est pas chargée en mémoire, et les ISO Linux courantes ne retrouvent pas leur support (§6, §16) |
 | 0.7 | 2026-09-28 | Kevin + Claude | Sanboot gardé en première version ; les ISO sont examinées et marquées au menu, « incompatible réseau » et « sans Secure Boot » (§6) |
 | 0.8 | 2026-09-29 | Claude | Essais Windows (Hiren's BootCD PE) et renvois : un `boot.wim` suffit à wimboot ; résultats des renvois, GRUB en UEFI en point ouvert (§6, §8, §16) |
+| 0.9 | 2026-09-29 | Claude | Interface : la langue vaut aussi pour le menu des postes ; entrée par défaut, disque local ou CloneGator ; état du service et derniers postes (§11) |
 
 ---
 
@@ -245,7 +246,8 @@ depuis les releases officielles d'iPXE, comme il le fait pour CloneGator. C'est 
 ## 11. L'interface
 
 Une interface texte, comme CloneGator : `sudo gatorpxe`, par SSH ou sur l'écran du serveur. Même
-présentation, mêmes touches, `F2` pour la langue (anglais par défaut, français).
+présentation, mêmes touches, `F2` pour la langue (anglais par défaut, français). La langue choisie
+est aussi celle du menu des postes.
 
 **L'accueil montre l'état d'un coup d'œil** :
 
@@ -260,7 +262,12 @@ présentation, mêmes touches, `F2` pour la langue (anglais par défaut, frança
 - dossier des images ;
 - CloneGator au menu ou non ;
 - renvois : ajouter, modifier, retirer, ordonner ;
-- délai du menu et entrée par défaut.
+- délai du menu et entrée par défaut (le disque local ou CloneGator).
+
+Chaque réglage enregistré est relu aussitôt par le service, sans couper les postes. L'interface
+ne sonde rien elle-même : le service lui laisse son état à chaque tour, et les derniers postes
+viennent du journal HTTP — le poste demande le menu avec son adresse matérielle et sa plateforme.
+Un pare-feu ufw actif qui ne laisse pas passer les ports du §9 est signalé à l'accueil.
 
 ## 12. Emplacements
 

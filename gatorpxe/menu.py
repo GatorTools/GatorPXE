@@ -139,7 +139,9 @@ def script_menu(reglages: config.Reglages, adresse_http: str, clonegator: bool =
         principal += script.items_images(inventaire, PRINCIPAL)
     principal += script.items_renvois(reglages.renvois)
     principal.append(f"item {config.DISQUE_LOCAL} {ascii(t('Démarrer sur le disque local'))}")
-    choix = f"choose --default {config.DISQUE_LOCAL}"
+    defaut = config.CLONEGATOR if reglages.entree_defaut == config.CLONEGATOR and avec_clonegator \
+        else config.DISQUE_LOCAL
+    choix = f"choose --default {defaut}"
     if reglages.delai > 0:
         choix += f" --timeout {reglages.delai * 1000}"
     principal += [f"{choix} cible || goto {config.DISQUE_LOCAL}", "goto ${cible}"]
@@ -199,5 +201,8 @@ def script_relais(adresse_http: str) -> str:
 
     Servi sous deux noms : `gatorpxe.ipxe`, que le proxy DHCP désigne, et
     `autoexec.ipxe`, que l'iPXE signé cherche de lui-même — ce qui évite la
-    boucle quand le DHCP est réglé à la main (§9)."""
-    return f"#!ipxe\nchain {adresse_http}/menu.ipxe\n"
+    boucle quand le DHCP est réglé à la main (§9).
+
+    L'adresse du menu porte celle du poste et sa plateforme : le journal HTTP
+    dit ainsi qui a démarré, en BIOS ou en UEFI (module postes)."""
+    return f"#!ipxe\nchain {adresse_http}/menu.ipxe?mac=${{mac:hexhyp}}&plateforme=${{platform}}\n"
