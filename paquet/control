@@ -4,7 +4,7 @@ Architecture: all
 Maintainer: Kevin Bélanger <belanger.kevin@gmail.com>
 Section: net
 Priority: optional
-Depends: python3 (>= 3.10), dnsmasq-base, lighttpd, 7zip, iproute2, ca-certificates, systemd
+Depends: python3 (>= 3.11), dnsmasq-base, lighttpd, 7zip, iproute2, ca-certificates, systemd
 Description: serveur de démarrage réseau (PXE)
  Les postes du réseau démarrent sur un menu construit tout seul : CloneGator,
  les images déposées dans un dossier (WIM, ISO, EFI), et des renvois vers

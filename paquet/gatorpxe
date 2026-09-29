@@ -3,4 +3,5 @@
 export PYTHONPATH=/usr/lib/gatorpxe${PYTHONPATH:+:$PYTHONPATH}
 # Pas de __pycache__ dans /usr/lib : dpkg ne le connaîtrait pas.
 export PYTHONDONTWRITEBYTECODE=1
-exec /usr/bin/python3 -m gatorpxe "$@"
+# -P : le dossier courant n'entre pas dans la recherche des modules.
+exec /usr/bin/python3 -P -m gatorpxe "$@"
