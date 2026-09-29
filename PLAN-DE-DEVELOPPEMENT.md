@@ -96,7 +96,7 @@ gatorpxe/
   renvois.py       WDS, iPXE/HTTP, PXE générique (§8)
   menu.py          le script iPXE du menu, à partir de l'inventaire et des réglages
   etat.py          ce que voit le service, écrit à chaque tour pour l'interface
-  detection.py     ce que le DHCP déjà en place annonce aux postes PXE (DHCPINFORM)
+  detection.py     ce que le service DHCP du réseau annonce aux postes PXE (DHCPINFORM)
   postes.py        derniers postes démarrés, lus dans le journal de lighttpd
   ui/
     model.py       état affiché, sans curses — testable seul
