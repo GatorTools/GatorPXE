@@ -1,0 +1,9 @@
+#!/bin/sh
+# Une purge efface les réglages et ce que le service a téléchargé ; les images
+# et les journaux restent.
+set -e
+if [ "$1" = "purge" ]; then
+    rm -rf /etc/gatorpxe /var/lib/gatorpxe
+fi
+systemctl daemon-reload >/dev/null 2>&1 || true
+exit 0

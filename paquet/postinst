@@ -1,0 +1,18 @@
+#!/bin/sh
+# À l'installation : le service démarre, proxy DHCP actif (§14 de l'analyse).
+set -e
+if [ "$1" = "configure" ]; then
+    # Le serveur web par défaut de lighttpd (port 80) est désactivé s'il n'est
+    # venu qu'avec GatorPXE, comme dépendance ; jamais s'il était installé (P3).
+    if [ -z "$2" ] && apt-mark showauto lighttpd 2>/dev/null | grep -qx lighttpd; then
+        systemctl disable --now lighttpd.service >/dev/null 2>&1 || true
+    fi
+    systemctl daemon-reload || true
+    systemctl enable gatorpxe.service >/dev/null 2>&1 || true
+    if [ -z "$2" ]; then
+        systemctl start gatorpxe.service || true
+    else
+        systemctl restart gatorpxe.service || true
+    fi
+fi
+exit 0
