@@ -102,7 +102,8 @@ ANGLAIS: dict[str, str] = {
     "Carte réseau": "Network card",
     "automatique ({carte})": "automatic ({carte})",
     "Réglages pour votre DHCP": "Settings for your DHCP",
-    "À saisir quand le proxy DHCP est coupé": "To enter when the proxy DHCP is off",
+    "Rien à configurer": "Nothing to configure",
+    "Options 66 et 67 à configurer": "Options 66 and 67 to configure",
     "Actif": "On",
     "Coupé": "Off",
     "Rien à régler sur votre DHCP": "Nothing to set on your DHCP",
@@ -122,16 +123,19 @@ ANGLAIS: dict[str, str] = {
     "si la classe utilisateur (option 77) vaut « iPXE », le fichier devient":
         "when the user class (option 77) is \"iPXE\", the file becomes",
     "En UEFI, rien de plus : iPXE trouve le menu de lui-même.": "For UEFI, nothing more: iPXE finds the menu by itself.",
-    "Le proxy DHCP est actif : rien à régler dans votre service DHCP.":
-        "The proxy DHCP is on: nothing to set in your DHCP service.",
-    "Si vous le désactivez, configurez-le ainsi (options 66 et 67) :":
-        "If you turn it off, configure it as follows (options 66 and 67):",
-    "Le proxy DHCP est désactivé. Si ce n'est pas déjà fait, configurez votre service DHCP (options 66 et 67) :":
-        "The proxy DHCP is off. If not already done, configure your DHCP service (options 66 and 67):",
-    "Cette machine reçoit son adresse de votre service DHCP, et le proxy DHCP est désactivé :":
-        "This machine gets its address from your DHCP service, and the proxy DHCP is off:",
-    "si ce n'est pas déjà fait, réservez cette adresse dans votre service DHCP, ou donnez-lui une adresse fixe.":
-        "if not already done, reserve this address in your DHCP service, or give it a static address.",
+    "Le proxy DHCP est activé : vous n'avez rien à configurer dans le service DHCP déjà en place.":
+        "The proxy DHCP is on: you have nothing to configure in your existing DHCP service.",
+    "Les ordinateurs du réseau reçoivent toujours leur adresse IP de ce service DHCP.":
+        "Computers on the network still get their IP address from that DHCP service.",
+    "Ceux qui démarrent par le réseau (PXE) trouvent GatorPXE automatiquement, grâce à son proxy DHCP.":
+        "Those booting from the network (PXE) find GatorPXE automatically, through its proxy DHCP.",
+    "Le proxy DHCP est désactivé. Si ce n'est pas déjà fait, configurez le service DHCP déjà en place "
+    "(options 66 et 67) :":
+        "The proxy DHCP is off. If not already done, configure your existing DHCP service (options 66 and 67):",
+    "Cette machine reçoit son adresse du service DHCP, et le proxy DHCP est désactivé :":
+        "This machine gets its address from the DHCP service, and the proxy DHCP is off:",
+    "si ce n'est pas déjà fait, réservez cette adresse dans le service DHCP, ou donnez-lui une adresse fixe.":
+        "if not already done, reserve this address in the DHCP service, or give it a static address.",
     "Dossier": "Folder",
     "Déposer une image ici suffit : elle paraît au menu. Un sous-dossier donne un sous-menu.":
         "Dropping an image here is enough: it shows in the menu. A subfolder gives a submenu.",

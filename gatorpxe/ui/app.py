@@ -297,7 +297,8 @@ class Application:
                             detail=t("actif") if self.reglages.proxy_dhcp else t("coupé")),
                     Element(t("Carte réseau"), "carte", detail=carte),
                     Element(t("Réglages pour votre DHCP"), "dhcp",
-                            detail=t("À saisir quand le proxy DHCP est coupé")),
+                            detail=t("Rien à configurer") if self.reglages.proxy_dhcp
+                            else t("Options 66 et 67 à configurer")),
                 ]
             choix = self._choisir(t("Réseau et DHCP"), elements, t(
                 "Le proxy DHCP ne répond qu'aux postes qui démarrent par le réseau."))
@@ -355,20 +356,27 @@ class Application:
                 Ligne.de(t("En UEFI, rien de plus : iPXE trouve le menu de lui-même."), DETAIL),
             ]
             if self.reglages.proxy_dhcp:
-                entete = [Ligne.de(t("Le proxy DHCP est actif : rien à régler dans votre service DHCP."), NORMAL),
-                          Ligne.de(t("Si vous le désactivez, configurez-le ainsi (options 66 et 67) :"), NORMAL)]
-            else:
-                entete = [Ligne.de(t("Le proxy DHCP est désactivé. Si ce n'est pas déjà fait, configurez votre "
-                                     "service DHCP (options 66 et 67) :"), FORT)]
-                if vu.get("adresse_dynamique"):
-                    # Une réservation DHCP ne se voit pas d'ici : « si ce n'est pas déjà fait ».
-                    lignes += [
-                        Ligne.de(""),
-                        Ligne.de(t("Cette machine reçoit son adresse de votre service DHCP, et le proxy DHCP est "
-                                   "désactivé :"), AVERTISSEMENT),
-                        Ligne.de(t("si ce n'est pas déjà fait, réservez cette adresse dans votre service DHCP, "
-                                   "ou donnez-lui une adresse fixe."), AVERTISSEMENT),
-                    ]
+                # Proxy actif : ce que ça implique, et rien à configurer.
+                lignes = [
+                    Ligne.de(t("Le proxy DHCP est activé : vous n'avez rien à configurer dans le service DHCP "
+                               "déjà en place."), FORT),
+                    Ligne.de(""),
+                    Ligne.de(t("Les ordinateurs du réseau reçoivent toujours leur adresse IP de ce service DHCP.")),
+                    Ligne.de(t("Ceux qui démarrent par le réseau (PXE) trouvent GatorPXE automatiquement, grâce "
+                               "à son proxy DHCP.")),
+                ]
+                return self._page(t("Réglages pour votre DHCP"), [], _touches_lire()), lignes
+            entete = [Ligne.de(t("Le proxy DHCP est désactivé. Si ce n'est pas déjà fait, configurez le service "
+                                 "DHCP déjà en place (options 66 et 67) :"), FORT)]
+            if vu.get("adresse_dynamique"):
+                # Une réservation DHCP ne se voit pas d'ici : « si ce n'est pas déjà fait ».
+                lignes += [
+                    Ligne.de(""),
+                    Ligne.de(t("Cette machine reçoit son adresse du service DHCP, et le proxy DHCP est "
+                               "désactivé :"), AVERTISSEMENT),
+                    Ligne.de(t("si ce n'est pas déjà fait, réservez cette adresse dans le service DHCP, "
+                               "ou donnez-lui une adresse fixe."), AVERTISSEMENT),
+                ]
             return self._page(t("Réglages pour votre DHCP"), entete, _touches_lire()), lignes
         self.ecran.afficher(construire)
 
