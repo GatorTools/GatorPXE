@@ -154,6 +154,7 @@ class Service:
             "version": VERSION,
             "carte": carte or "",
             "adresse": str(adresse.ip) if adresse else "",
+            "adresse_dynamique": reseau.adresse_dynamique(carte) if adresse else False,
             "attente": attente,
             "proxy_dhcp": self.reglages.proxy_dhcp,
             "dnsmasq": vivant(self.dnsmasq),

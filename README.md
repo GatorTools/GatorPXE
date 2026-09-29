@@ -9,7 +9,17 @@ seul :
 - **les images** déposées dans un dossier : WIM, ISO, EFI ;
 - **des renvois** vers d'autres serveurs de démarrage, comme WDS.
 
-Aucune adresse IP distribuée, rien à régler sur le DHCP existant.
+Aucune adresse IP distribuée, rien à régler sur le DHCP existant, et pas même
+besoin d'une adresse fixe : on peut l'essayer sur n'importe quel ordinateur du
+réseau.
 
-**État : en préparation, rien n'est codé.** Le détail est dans
-l'[analyse fonctionnelle](ANALYSE-FONCTIONNELLE.md), qui fait foi.
+**État : version d'essai.** Sur Ubuntu 24.04 ou Debian 13 :
+
+```bash
+wget -qO- gatortools.github.io/apt/install.sh | sudo sh
+sudo apt install gatorpxe
+sudo gatorpxe
+```
+
+Le détail est dans l'[analyse fonctionnelle](ANALYSE-FONCTIONNELLE.md), qui fait
+foi, et l'avancement dans le [plan de développement](PLAN-DE-DEVELOPPEMENT.md).

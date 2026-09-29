@@ -20,6 +20,7 @@ seul.
 | 0.10 | 2026-09-29 | Claude | Paquet : Python 3.11 ou plus, `iproute2` et `ca-certificates` en dépendances (§14) |
 | 0.11 | 2026-09-29 | Kevin + Claude | Renvoi WDS en UEFI : limite d'iPXE 2.0.0, en attente de son correctif (§8) |
 | 0.12 | 2026-09-29 | Kevin + Claude | Renvoi WDS marqué « pas en UEFI pour l'instant » au menu des postes UEFI, tant qu'iPXE 2.0.0 est en service (§8) |
+| 0.13 | 2026-09-29 | Kevin + Claude | Adresse dynamique : sans conséquence en proxy DHCP ; proxy coupé, l'écran des réglages DHCP avertit si l'adresse vient du DHCP (§9) |
 
 ---
 
@@ -227,6 +228,12 @@ carte réseau principale du serveur, détectée seule ; on peut en choisir une a
 chaque poste le bon chargeur, BIOS ou UEFI, et reconnaît iPXE une fois chargé pour lui envoyer le
 menu plutôt que de le recharger en boucle. Rien à régler sur le DHCP existant.
 
+**Pas besoin d'adresse fixe en proxy DHCP.** Le proxy annonce lui-même l'adresse du serveur à
+chaque demande, et le service suit un changement d'adresse en quelques secondes (essai : 3 s) :
+GatorPXE peut s'essayer sur n'importe quel ordinateur du réseau, en adresse dynamique. Un poste
+qui démarre au moment précis du changement échoue, et on le redémarre ; un bail DHCP renouvelé
+garde d'ailleurs presque toujours la même adresse. Une adresse fixe reste préférable.
+
 **Proxy DHCP coupé.** Pour un réseau où un proxy DHCP est interdit : l'interface affiche exactement
 les réglages à saisir dans le DHCP existant (Windows Server, pfSense, routeur…) :
 
@@ -235,6 +242,10 @@ les réglages à saisir dans le DHCP existant (Windows Server, pfSense, routeur�
 - en BIOS seulement, la condition qui évite la boucle d'iPXE : si la classe utilisateur est
   « iPXE », le fichier est l'adresse du menu (`http://…:8069/menu.ipxe`). En UEFI, l'iPXE signé
   trouve le menu de lui-même.
+
+Ces réglages désignent le serveur par son adresse : elle doit rester la même. Si le serveur tient
+son adresse du DHCP, l'écran le signale et propose de la réserver ou de la fixer ; une réservation
+DHCP ne se distingue pas d'un bail ordinaire vue du serveur, d'où ce ton de simple rappel.
 
 **Ports** : DHCP proxy (67 et 4011, UDP), TFTP (69, UDP), HTTP (8069, TCP). Le pare-feu du
 serveur, s'il y en a un, doit les laisser passer ; l'interface le vérifie et le dit.

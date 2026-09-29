@@ -1,6 +1,6 @@
 # GatorPXE — Plan de développement
 
-Compagnon de [ANALYSE-FONCTIONNELLE.md](ANALYSE-FONCTIONNELLE.md), révision 0.12.
+Compagnon de [ANALYSE-FONCTIONNELLE.md](ANALYSE-FONCTIONNELLE.md), révision 0.13.
 Les renvois `§n` pointent vers l'analyse.
 
 | Rév. | Date | Auteur | Changement |
@@ -19,6 +19,7 @@ Les renvois `§n` pointent vers l'analyse.
 | 0.12 | 2026-09-29 | Kevin + Claude | Phase 6 : paquet publié en release et par le dépôt APT, à la demande de Kevin, pour son essai sur un serveur à lui. Analyse 0.10 |
 | 0.13 | 2026-09-29 | Kevin + Claude | Recette : renvoi WDS en UEFI bloqué par une régression d'iPXE 2.0.0, reproduite sur la station. Analyse 0.11 |
 | 0.14 | 2026-09-29 | Kevin + Claude | Marque « pas en UEFI pour l'instant » sur le renvoi WDS ; nouvelle version publiée. Analyse 0.12 |
+| 0.15 | 2026-09-29 | Kevin + Claude | Adresse dynamique essayée (le service suit en 3 s) ; avertissement en proxy coupé. Analyse 0.13 |
 
 ---
 

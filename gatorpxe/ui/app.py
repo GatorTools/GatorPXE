@@ -355,6 +355,11 @@ class Application:
                 Ligne.de(t("En UEFI, rien de plus : iPXE trouve le menu de lui-même."), DETAIL),
             ]
             entete = [Ligne.de(t("À saisir dans votre DHCP (Windows Server, routeur…) si le proxy DHCP est coupé."), DETAIL)]
+            if vu.get("adresse_dynamique"):
+                # Une réservation DHCP ne se voit pas d'ici : le texte reste nuancé.
+                entete.append(Ligne.de(t("Ce serveur tient son adresse du DHCP : si elle change, ces réglages ne "
+                                         "mèneront plus ici."), AVERTISSEMENT))
+                entete.append(Ligne.de(t("Réservez-la dans votre DHCP, ou fixez-la."), AVERTISSEMENT))
             return self._page(t("Réglages pour votre DHCP"), entete, _touches_lire()), lignes
         self.ecran.afficher(construire)
 

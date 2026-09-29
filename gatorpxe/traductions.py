@@ -122,6 +122,9 @@ ANGLAIS: dict[str, str] = {
     "si la classe utilisateur (option 77) vaut « iPXE », le fichier devient":
         "when the user class (option 77) is \"iPXE\", the file becomes",
     "En UEFI, rien de plus : iPXE trouve le menu de lui-même.": "For UEFI, nothing more: iPXE finds the menu by itself.",
+    "Ce serveur tient son adresse du DHCP : si elle change, ces réglages ne mèneront plus ici.":
+        "This server gets its address from DHCP: if it changes, these settings will no longer lead here.",
+    "Réservez-la dans votre DHCP, ou fixez-la.": "Reserve it in your DHCP, or make it static.",
     "À saisir dans votre DHCP (Windows Server, routeur…) si le proxy DHCP est coupé.":
         "To enter in your DHCP (Windows Server, router…) when the proxy DHCP is off.",
     "Dossier": "Folder",

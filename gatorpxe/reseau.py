@@ -28,8 +28,8 @@ def carte_principale() -> str | None:
     return min(candidates)[1] if candidates else None
 
 
-def adresse(carte: str) -> ipaddress.IPv4Interface | None:
-    """L'adresse IPv4 de la carte, avec son réseau ; None si elle n'en a pas."""
+def _lire(carte: str) -> dict | None:
+    """La première adresse IPv4 de la carte, telle que la décrit `ip -j`."""
     resultat = sysexec.executer(["ip", "-j", "-4", "addr", "show", "dev", carte],
                                  echec_prevu=True, discret=True)
     if not resultat.ok:
@@ -38,7 +38,24 @@ def adresse(carte: str) -> ipaddress.IPv4Interface | None:
         for interface in json.loads(resultat.sortie):
             for adr in interface.get("addr_info", []):
                 if adr.get("family") == "inet":
-                    return ipaddress.IPv4Interface(f"{adr['local']}/{adr['prefixlen']}")
-    except (ValueError, KeyError, TypeError) as erreur:
+                    return adr
+    except (ValueError, TypeError) as erreur:
         _log.warning("adresse de %s illisible : %s", carte, erreur)
     return None
+
+
+def adresse(carte: str) -> ipaddress.IPv4Interface | None:
+    """L'adresse IPv4 de la carte, avec son réseau ; None si elle n'en a pas."""
+    adr = _lire(carte)
+    try:
+        return ipaddress.IPv4Interface(f"{adr['local']}/{adr['prefixlen']}") if adr else None
+    except (ValueError, KeyError) as erreur:
+        _log.warning("adresse de %s illisible : %s", carte, erreur)
+        return None
+
+
+def adresse_dynamique(carte: str) -> bool:
+    """L'adresse vient-elle du DHCP ? Une réservation DHCP ne se distingue pas
+    d'un bail ordinaire : elle aussi est « dynamique » pour la machine."""
+    adr = _lire(carte)
+    return bool(adr and adr.get("dynamic"))
