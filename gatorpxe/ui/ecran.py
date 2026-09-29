@@ -31,7 +31,7 @@ _log = logging.getLogger("gatorpxe.ui")
 
 from .model import (
     AVERTISSEMENT, CURSEUR, DETAIL, ECHEC, FORT, GRISE, NORMAL, OK, POINT, RETOUR, VALIDER,
-    Element, Formulaire, Ligne, Liste, Page,
+    Element, Formulaire, Ligne, Liste, Page, replier,
 )
 
 _TOUCHES = {
@@ -266,12 +266,17 @@ class Ecran:
         if page.titre:
             self._ecrire(y, Ligne.de(page.titre, FORT), droite, x=x)
             y += 2
-        for ligne in page.entete:
+        # Les textes trop longs se replient à la largeur du terminal ; les
+        # lignes d'une liste, elles, restent entières (le curseur les compte).
+        entete = [morceau for ligne in page.entete for morceau in replier(ligne, droite - x - 1)]
+        if choisie is None:
+            corps = [morceau for ligne in corps for morceau in replier(ligne, droite - x - 1)]
+        for ligne in entete:
             if y >= hauteur - 3:
                 break
             self._ecrire(y, ligne, droite, x=x)
             y += 1
-        if page.entete:
+        if entete:
             y += 1
 
         # Le corps défile pour garder la ligne choisie visible.

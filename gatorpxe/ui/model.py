@@ -55,6 +55,36 @@ class Ligne:
         return "".join(t for t, _ in self.morceaux)
 
 
+def replier(ligne: Ligne, largeur: int) -> list[Ligne]:
+    """Replie une ligne trop longue en plusieurs, mot à mot, styles gardés. Les
+    lignes suivantes sont alignées sur le premier mot de la première (après un
+    « ! » ou un retrait)."""
+    if largeur <= 0 or len(ligne.texte()) <= largeur:
+        return [ligne]
+    texte = ligne.texte()
+    retrait = next((i for i, c in enumerate(texte) if c.isalnum()), 0)
+    # Mots avec leur style ; les espaces restent attachés au mot qui les précède.
+    mots: list[tuple[str, str]] = []
+    for morceau, style in ligne.morceaux:
+        courant = ""
+        for car in morceau:
+            courant += car
+            if car == " ":
+                mots.append((courant, style))
+                courant = ""
+        if courant:
+            mots.append((courant, style))
+    lignes = [Ligne()]
+    longueur = 0
+    for mot, style in mots:
+        if longueur + len(mot.rstrip()) > largeur and longueur > retrait:
+            lignes.append(Ligne([(" " * retrait, NORMAL)]))
+            longueur = retrait
+        lignes[-1].morceaux.append((mot, style))
+        longueur += len(mot)
+    return lignes
+
+
 @dataclass
 class Element:
     """Un choix d'une liste. Un élément inactif reste visible, grisé, avec son

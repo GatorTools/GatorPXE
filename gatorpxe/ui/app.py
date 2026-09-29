@@ -370,9 +370,8 @@ class Application:
                 lignes += [
                     Ligne.de(""),
                     Ligne.de(t("Cette machine reçoit son adresse du service DHCP du réseau, et le proxy DHCP est "
-                               "désactivé :"), AVERTISSEMENT),
-                    Ligne.de(t("si ce n'est pas déjà fait, réservez cette adresse dans le service DHCP du réseau, "
-                               "ou donnez-lui une adresse fixe."), AVERTISSEMENT),
+                               "désactivé : si ce n'est pas déjà fait, réservez cette adresse dans le service DHCP "
+                               "du réseau, ou donnez-lui une adresse fixe."), AVERTISSEMENT),
                 ]
             entete = [Ligne.de(t("Le proxy DHCP est désactivé. Si ce n'est pas déjà fait, configurez le service "
                                  "DHCP du réseau (options 66 et 67) :"), FORT)]
@@ -589,21 +588,20 @@ def lignes_annonce(vu: dict, proxy: bool) -> list[Ligne]:
     if annonce.get("ce_serveur") and proxy:
         return [Ligne.de(""),
                 Ligne.de(t("Les configurations du service DHCP du réseau désignent ce serveur GatorPXE "
-                           "(options 66 et 67) :"), OK),
-                Ligne.de(t("le proxy DHCP de GatorPXE n'est pas nécessaire, vous pouvez le désactiver."), OK)]
+                           "(options 66 et 67) : le proxy DHCP de GatorPXE n'est pas nécessaire, vous pouvez "
+                           "le désactiver."), OK)]
     if annonce.get("ce_serveur"):
         return [Ligne.de(""),
                 Ligne.de(t("Les configurations du service DHCP du réseau désignent bien ce serveur GatorPXE "
                            "(options 66 et 67)."), OK)]
     if proxy:
-        premiere = t("Le proxy DHCP de GatorPXE est activé. Cependant, les configurations du service DHCP "
-                     "du réseau")
+        texte = t("Le proxy DHCP de GatorPXE est activé. Cependant, les configurations du service DHCP du "
+                  "réseau désignent un autre serveur PXE (option 66 : {serveur}). Corrigez-les dans le "
+                  "service DHCP du réseau.", serveur=annonce.get("serveur"))
     else:
-        premiere = t("Les configurations du service DHCP du réseau")
-    return [Ligne.de(""),
-            Ligne([("! ", AVERTISSEMENT), (premiere, AVERTISSEMENT)]),
-            Ligne.de("  " + t("désignent un autre serveur PXE (option 66 : {serveur}). Corrigez-les dans le "
-                              "service DHCP du réseau.", serveur=annonce.get("serveur")), AVERTISSEMENT)]
+        texte = t("Les configurations du service DHCP du réseau désignent un autre serveur PXE (option 66 : "
+                  "{serveur}). Corrigez-les dans le service DHCP du réseau.", serveur=annonce.get("serveur"))
+    return [Ligne.de(""), Ligne([("! ", AVERTISSEMENT), (texte, AVERTISSEMENT)])]
 
 
 def service_actif() -> bool:
