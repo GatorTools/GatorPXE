@@ -1,6 +1,6 @@
 # GatorPXE — Plan de développement
 
-Compagnon de [ANALYSE-FONCTIONNELLE.md](ANALYSE-FONCTIONNELLE.md), révision 0.10.
+Compagnon de [ANALYSE-FONCTIONNELLE.md](ANALYSE-FONCTIONNELLE.md), révision 0.11.
 Les renvois `§n` pointent vers l'analyse.
 
 | Rév. | Date | Auteur | Changement |
@@ -17,6 +17,7 @@ Les renvois `§n` pointent vers l'analyse.
 | 0.10 | 2026-09-29 | Kevin + Claude | Le WDS de production n'est pas joignable depuis le segment de la station : l'essai du renvoi WDS passe à la recette (phase 6), sur un segment où il répond |
 | 0.11 | 2026-09-29 | Claude | Phase 5 faite, en attente de la revue de Kevin. Analyse 0.9 |
 | 0.12 | 2026-09-29 | Kevin + Claude | Phase 6 : paquet publié en release et par le dépôt APT, à la demande de Kevin, pour son essai sur un serveur à lui. Analyse 0.10 |
+| 0.13 | 2026-09-29 | Kevin + Claude | Recette : renvoi WDS en UEFI bloqué par une régression d'iPXE 2.0.0, reproduite sur la station. Analyse 0.11 |
 
 ---
 
@@ -353,6 +354,11 @@ recette.
 
 Enseignements :
 
+- Recette de Kevin, WDS en UEFI : `wdsmgfw.efi` est chargé mais affiche « Server IP: 0.0.0.0 »
+  (0xc000000e). Reproduit sur la station avec le même fichier, tiré du `boot.wim` de Hiren's
+  (identique à celui du WDS de Kevin) et servi par le second serveur d'essai. Aucun réglage
+  d'iPXE n'y change rien : c'est la régression d'iPXE 2.0.0 du ticket n° 1716 (correctif proposé,
+  n° 1718, non fusionné).
 - Lancé depuis le dossier du dépôt, `python3 -m gatorpxe` prenait le code du dossier courant
   plutôt que celui installé : le lanceur passe `-P` (Python 3.11 ou plus). CloneGator a le même
   lanceur.

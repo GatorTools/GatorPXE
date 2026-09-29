@@ -18,6 +18,7 @@ seul.
 | 0.8 | 2026-09-29 | Claude | Essais Windows (Hiren's BootCD PE) et renvois : un `boot.wim` suffit à wimboot ; résultats des renvois, GRUB en UEFI en point ouvert (§6, §8, §16) |
 | 0.9 | 2026-09-29 | Claude | Interface : la langue vaut aussi pour le menu des postes ; entrée par défaut, disque local ou CloneGator ; état du service et derniers postes (§11) |
 | 0.10 | 2026-09-29 | Claude | Paquet : Python 3.11 ou plus, `iproute2` et `ca-certificates` en dépendances (§14) |
+| 0.11 | 2026-09-29 | Kevin + Claude | Renvoi WDS en UEFI : limite d'iPXE 2.0.0, en attente de son correctif (§8) |
 
 ---
 
@@ -203,8 +204,14 @@ fichiers signés par Microsoft (c'est le cas des fichiers de WDS).
 Le programme chargé depuis l'autre serveur y trouve la suite de ses fichiers : iPXE lui annonce
 cet autre serveur comme le sien. Essais sur le réseau d'essai : iPXE/HTTP vers netboot.xyz, en
 BIOS et en UEFI Secure Boot ; PXE générique vers pxelinux, en BIOS. En UEFI, un GRUB chargé par
-renvoi connaît bien son serveur mais n'y lit pas sa configuration : point ouvert, à revoir avec
-le renvoi vers WDS (§16).
+renvoi connaît bien son serveur mais n'y lit pas sa configuration : point ouvert.
+
+**WDS en UEFI : limite d'iPXE 2.0.0.** Chargé par renvoi, `wdsmgfw.efi` affiche « Server IP:
+0.0.0.0 » et s'arrête (0xc000000e), sur le WDS de l'école comme sur la station. C'est une
+régression d'iPXE 2.0.0 (ticket iPXE n° 1716) : le programme de Microsoft cherche l'interface
+réseau sur son propre appareil, où iPXE ne la met plus. Un correctif est proposé (n° 1718). Le
+service tient iPXE à jour chaque jour : une release corrigée sera prise d'elle-même. En BIOS,
+`wdsnbp.com` n'est pas concerné.
 
 ---
 
